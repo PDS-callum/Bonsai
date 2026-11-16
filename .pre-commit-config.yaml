@@ -23,6 +23,8 @@ repos:
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
+        # results/ holds records of past runs (e.g. a job's job.sh), not source.
+        exclude: ^results/
 
   - repo: local
     hooks:
