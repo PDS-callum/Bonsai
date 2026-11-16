@@ -17,6 +17,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from bonsai._validate import require
+
 GIB = 1024**3
 
 
@@ -54,17 +56,7 @@ class Pot:
 def _require(
     table: dict[str, Any], key: str, kind: type | tuple[type, ...], where: str
 ) -> Any:
-    if key not in table:
-        msg = f"{where}: missing '{key}'"
-        raise PotError(msg)
-    value = table[key]
-    # bool is a subclass of int, but a flag never belongs where a number does.
-    if isinstance(value, bool) or not isinstance(value, kind):
-        kinds = kind if isinstance(kind, tuple) else (kind,)
-        expected = " or ".join(k.__name__ for k in kinds)
-        msg = f"{where}: '{key}' must be {expected}, got {value!r}"
-        raise PotError(msg)
-    return value
+    return require(table, key, kind, where, PotError)
 
 
 def _positive(value: float, key: str, where: str) -> float:
