@@ -4,196 +4,227 @@
 
 <p align="center"><em>Small models, grown slowly on small hardware.</em></p>
 
-Bonsai is an ongoing research project into running small language models on
-CPU, mainly on a Raspberry Pi, with a PC for heavier lifting. The aim is to find
-out what these models can actually do under tight constraints, and what it
-costs to get there: how much accuracy is lost to compression, which
-optimisations really help on a Pi's ARM processor, and how best to spend a
-fixed time budget.
+Bonsai is a framework for cultivating small language models for small,
+CPU-bound hardware. You start from an existing open model (the **seed**),
+**prune** it to fit a hardware budget (the **pot**), shape it towards a task,
+**repot** it into a format the device can run, and **measure** how it grows.
+Every cut is written in the **journal**, so any tree can be traced back to its
+seed and the exact steps that shaped it.
 
-> **Status:** early days. Nothing below has been run yet; this README sets out
-> the plan, the decisions made so far and the open questions. Results will be
-> added as they come in, including the things that don't work.
+The main pot is a Raspberry Pi. A PC acts as the potting bench, where the heavy
+work happens.
+
+> **Status:** planning. No code yet. This README sets out the idea, the first
+> phase of work (**Phase 1: Nursery**) and the decisions made so far. Results
+> will be added as they come in, including the things that don't work.
 
 ---
 
 ## Contents
 
 - [Why "Bonsai"](#why-bonsai)
-- [Research questions](#research-questions)
-- [Hardware and roles](#hardware-and-roles)
-- [Software stack](#software-stack)
-- [Models](#models)
-- [Evaluation tasks](#evaluation-tasks)
-- [Experiments](#experiments)
-- [What is measured](#what-is-measured)
-- [Methodology and reproducibility](#methodology-and-reproducibility)
+- [The language of the garden](#the-language-of-the-garden)
+- [The core idea: bytes per token](#the-core-idea-bytes-per-token)
+- [The cultivation cycle](#the-cultivation-cycle)
+- [The garden: hardware](#the-garden-hardware)
+- [Phase 1: Nursery](#phase-1-nursery)
+- [The journal](#the-journal)
 - [Planned repository layout](#planned-repository-layout)
 - [Engineering conventions](#engineering-conventions)
-- [Roadmap](#roadmap)
+- [Roadmap: the seasons ahead](#roadmap-the-seasons-ahead)
 - [Decisions log](#decisions-log)
 - [Open questions](#open-questions)
+- [Prior art](#prior-art)
 - [Results](#results)
 
 ---
 
 ## Why "Bonsai"
 
-A bonsai is a small tree shaped by careful pruning and patience, grown in a
-small pot. This project does the same with language models: prune and compress
-them, then see what grows well on small hardware. Pruning is also a real model
-compression technique.
+A bonsai is an ordinary tree, kept small by careful pruning and shaped with
+patience until it thrives in a small pot. It isn't a different species; it's a
+normal tree that has been cultivated with intent.
+
+Bonsai treats language models the same way. Rather than training tiny models
+from scratch, it takes capable open models and shapes them to live well on
+small hardware: cutting what isn't needed, healing what remains, and keeping a
+record of every cut.
 
 ---
 
-## Research questions
+## The language of the garden
 
-The main question:
+The framework's vocabulary follows the metaphor, so the code and the docs read
+the same way.
 
-> **With a fixed time budget on a Raspberry Pi, what gives the best answers: a
-> bigger model compressed hard, a smaller model at higher precision, or a tiny
-> model run several times?**
-
-Supporting questions:
-
-1. **Quantisation vs accuracy.** How does accuracy change from Q8 down to Q2?
-   Where does quality fall off a cliff, and is that point the same for every
-   model and task?
-2. **Reasoning vs knowledge.** Does compression hurt multi-step reasoning more
-   than factual recall?
-3. **Equal-time comparisons.** At the same seconds per question, does a larger
-   model answering once beat a smaller model answering several times with a
-   majority vote (self-consistency)?
-4. **Inference optimisations on ARM.** Which settings and techniques actually
-   help on a Pi CPU, as opposed to on GPUs: thread count, context length, KV
-   cache quantisation, prompt caching and speculative decoding?
-5. **Constrained output.** Does forcing output into a valid format with a
-   grammar (e.g. JSON) let a small model match a bigger one on extraction
-   tasks?
-6. **Sustained performance.** Does the Pi throttle as it heats up over long
-   runs, and how much does that change real throughput compared with a single
-   best-case number?
+| Term | Meaning |
+|---|---|
+| **Seed** | The starting model, e.g. Qwen 0.5B from Hugging Face. |
+| **Tree** | Any model in the framework: a seed or anything grown from one. |
+| **Pot** | A hardware budget: RAM, storage, memory bandwidth and a target speed. |
+| **Prune** | Remove structure (layers, attention heads, MLP width, experts) to fit the pot. |
+| **Wire** | Retrain a pruned tree to heal it and shape it, e.g. by distillation from its seed. *(Phase 2)* |
+| **Graft** | Attach new behaviour, e.g. LoRA adapters for a task. *(later)* |
+| **Repot** | Quantise and convert a tree into the format the pot runs (GGUF for llama.cpp). |
+| **Measure** | Score a tree on quality, speed, memory and heat. |
+| **Journal** | The record of every tree, its parent, what was done to it and how it measured. |
+| **Season** | One full cycle of prune → (wire) → repot → measure. |
+| **Nursery** | Phase 1: raising the first trees and the tools to tend them. |
 
 ---
 
-## Hardware and roles
+## The core idea: bytes per token
+
+On a CPU, generating each token means reading every active weight from memory
+once. Speed is set mostly by **how many bytes are read per token**, not by the
+parameter count on the label:
+
+```
+tokens per second  ≲  memory bandwidth  ÷  bytes of active weights
+```
+
+A Raspberry Pi 5 has roughly 10–17 GB/s of memory bandwidth. A 1B-parameter
+model at 4-bit is about 0.6 GB, so its ceiling is somewhere around 15–25 tokens
+per second, before any other overhead.
+
+This is what makes the pot concrete. Every pot has a bytes-per-token budget, and
+every pruning or quantisation decision is judged by what it buys within that
+budget. It also explains why storage-streaming tricks that let enormous models
+run *at all* (reading weights from an SSD as needed) don't help a Pi run
+anything *well*: a Pi's NVMe link is around 20× slower than its RAM. For daily
+use, the tree has to fit in the pot.
+
+---
+
+## The cultivation cycle
+
+```
+   seed ──► prune ──► wire ──► repot ──► measure ──► journal
+              ▲      (Phase 2)                          │
+              └────────────── next season ◄─────────────┘
+```
+
+1. **Plant** a seed: register a model and its source checksum.
+2. **Prune** it to fit the pot.
+3. **Wire** it to recover quality and shape it for a task. *(Phase 2 onwards)*
+4. **Repot** it: quantise, convert to GGUF and check it against its reference.
+5. **Measure** it on the potting bench (quality) and in the pot (speed, memory,
+   heat).
+6. **Journal** everything, then decide what to cut next season.
+
+---
+
+## The garden: hardware
 
 No extra hardware: just a PC and a Raspberry Pi on the same home network. The
 Pi stays indoors in the office.
 
 | Machine | Role |
 |---|---|
-| **Raspberry Pi** | The device under test. Runs quantised models with llama.cpp on CPU only. Logs temperature, clock speed and throttling. |
-| **PC** | The orchestrator. Prepares and quantises models, runs full-precision reference results, sends prompts to the Pi over SSH or HTTP, scores answers and stores results. |
+| **Raspberry Pi: the pot** | Runs repotted trees with llama.cpp on CPU only. Measures speed, peak RAM, temperature, clock speed and throttling. |
+| **PC: the potting bench** | Plants, prunes and repots trees. Measures quality (accuracy does not depend on the hardware for the same GGUF and settings, so it is cheaper to measure here). Sends trees to the Pi, collects measurements and keeps the journal. |
 
-Details to record once confirmed: Pi model and RAM, cooling (heatsink or fan),
-OS version, storage (SD card or SSD), and the PC's CPU and GPU (if any).
-
----
-
-## Software stack
-
-Planned, not yet installed:
-
-- **Inference:** [llama.cpp](https://github.com/ggml-org/llama.cpp), built
-  from source on the Pi. Models in GGUF format. Its built-in server
-  (`llama-server`) provides an HTTP API the PC can call.
-- **Quantisation:** llama.cpp's quantisation tools, run on the PC.
-- **Orchestration and evaluation:** Python 3.11+, managed with uv.
-- **Results storage:** SQLite, one row per (configuration, question, run).
-- **Analysis and plots:** pandas, matplotlib or Plotly, in notebooks or
-  scripts under `analysis/`.
-- **Pi telemetry:** `vcgencmd` (`measure_temp`, `measure_clock arm`,
-  `get_throttled`; `pmic_read_adc` for power readings on a Pi 5).
+Details to record once confirmed: Pi model and RAM, cooling, OS version,
+storage (SD card or NVMe), and the PC's CPU and GPU (if any).
 
 ---
 
-## Models
+## Phase 1: Nursery
 
-Small open-weight models from about 0.5B to 4B parameters. Candidates, to be
-finalised (check each licence before use):
+**Goal:** one complete season using cheap operations only, plus the baseline
+every later tree has to beat. No training yet.
 
-- Qwen (0.5B, 1.5B, 3B)
-- Llama 3.2 (1B, 3B)
-- Gemma (small variants)
-- SmolLM (135M to 1.7B)
-- Phi (mini variants)
+### In scope
 
-Each model is tested at several quantisation levels (for example Q2_K, Q3_K_M,
-Q4_K_M, Q5_K_M, Q6_K, Q8_0), with full-precision results on the PC as the
-reference. Model files are not stored in git; record exact sources and
-checksums in `configs/models.yaml`.
+1. **Profile the pot.** Measure the Pi's real memory bandwidth, RAM and storage
+   once, and store them as a pot profile. This gives each tree a speed ceiling.
+2. **Measure.** Repot a tree, deploy it to the Pi's `llama-server`, and record
+   prompt and generation tokens per second, time to first token, peak RAM,
+   temperature and throttle flags. Measure quality on the PC, with a periodic
+   cross-check on the Pi.
+3. **Keep the journal.** A SQLite record of every tree: parent, operations,
+   file checksums, configuration and measurements.
+4. **Prune by depth.** Remove whole transformer layers from a Hugging Face
+   model, choosing them with a simple importance score (how much each layer
+   changes its input). Removing whole layers keeps every remaining layer the
+   same shape, so the result still converts to standard GGUF.
+5. **Repot with a reference check.** Convert to GGUF and quantise. Before
+   measuring, check the unquantised GGUF against the pruned Hugging Face model
+   on fixed prompts (matching next-token predictions within a tolerance), so a
+   broken conversion is caught before it is measured.
+6. **Grow the baseline.** Measure off-the-shelf seeds (e.g. Qwen and Llama 3.2,
+   0.5B–3B) at several quantisation levels (Q2_K to Q8_0). This is the
+   **frontier**: the best quality available at each speed without Bonsai.
+
+### Measurements
+
+- **Quality:** perplexity on held-out text (fast, used to guide pruning), plus
+  task accuracy on fixed subsets of GSM8K (maths reasoning) and ARC (science
+  knowledge), with confidence intervals.
+- **Speed:** prompt and generation tokens per second, time to first token,
+  time per answer.
+- **Memory:** file size and peak RAM on the Pi.
+- **Heat:** CPU temperature, clock speed and throttle flags over time.
+- **Provenance:** seed checksum, every operation, llama.cpp commit, runtime
+  settings, prompt template and random seed.
+
+### Deliverables
+
+- A command-line tool covering the season:
+
+  ```
+  bonsai profile             # measure the pot
+  bonsai plant <model>       # register a seed
+  bonsai prune <tree> ...    # cut a new tree from an existing one
+  bonsai repot <tree> ...    # quantise, convert and check
+  bonsai measure <tree>      # quality on the bench, speed in the pot
+  bonsai journal             # browse trees and their lineage
+  ```
+
+  (Names and options are a sketch and will change.)
+
+- **The first frontier plot:** quality against tokens per second on the Pi,
+  with the off-the-shelf frontier and the pruned trees on the same axes.
+
+### What we expect to learn
+
+Pruning without healing will almost certainly push trees below the frontier,
+possibly sharply after a few layers. That is still a useful result: it measures
+how much quality wiring (Phase 2) has to recover, and which layers can be cut
+cheaply.
+
+### Not in Phase 1
+
+Wiring (healing and distillation), grafting, task specialisation, width and
+expert pruning, a custom inference engine, and growing models upward.
+
+### Done when
+
+- [ ] A pot profile for the Pi exists
+- [ ] The off-the-shelf frontier is measured for at least two seed families
+- [ ] At least one seed has been depth-pruned at several cut sizes, repotted,
+      checked and measured
+- [ ] Every tree in the plot can be traced through the journal to its seed
+- [ ] The frontier plot and a short write-up of what was learned are in `results/`
 
 ---
 
-## Evaluation tasks
+## The journal
 
-Fixed subsets of public benchmarks, chosen to cover different skills. The same
-question IDs are used for every configuration so results are directly
-comparable.
+Every tree is a record. A first sketch:
 
-| Skill | Dataset (candidates) | Scoring |
-|---|---|---|
-| Multi-step maths reasoning | GSM8K | Exact match on the final number |
-| Science knowledge | ARC (Easy/Challenge), SciQ | Multiple-choice accuracy |
-| Structured extraction | A small extraction set (to be chosen or built) | Valid JSON rate, field-level accuracy |
+| Field | Example |
+|---|---|
+| `id` | `qwen2.5-0.5b/p2-l3` |
+| `parent` | `qwen2.5-0.5b` |
+| `operation` | `prune.depth` with `{layers: [17, 18, 20]}` |
+| `artifact` | path and SHA-256 of the weights or GGUF |
+| `pot` | the pot profile it was measured in |
+| `measurements` | quality, speed, memory and heat results, linked by run |
+| `environment` | llama.cpp commit, Python dependency lock hash, config hash |
 
-Start with about 100 questions per task to keep runs short, then increase once
-the harness is stable. Record dataset versions and the exact question IDs used.
-
----
-
-## Experiments
-
-| # | Experiment | Varies | Fixed |
-|---|---|---|---|
-| E1 | Quantisation sweep | Model × quantisation level | Prompt, settings, questions |
-| E2 | Equal time budget | Model size, number of samples (majority vote) | Seconds per question |
-| E3 | Inference optimisations | Threads, context length, KV cache type, prompt caching, speculative decoding (draft model) | Model, quantisation, questions |
-| E4 | Constrained output | Grammar on or off | Model, quantisation, extraction task |
-| E5 | Sustained running | Run length (e.g. 1 hour+) | Everything else |
-
-E1 comes first: it builds the harness and gives the baseline every later
-experiment is compared against.
-
----
-
-## What is measured
-
-For every run:
-
-- **Quality:** accuracy (or task-specific score), with confidence intervals.
-- **Speed:** prompt processing tokens per second, generation tokens per second,
-  time to first token, total time per question.
-- **Memory:** peak RAM use on the Pi.
-- **Hardware state:** CPU temperature, clock speed and throttle flags over
-  time; power on a Pi 5 if readings are reliable.
-- **Configuration:** model, quantisation, llama.cpp commit, all runtime
-  settings, prompt template, random seed.
-
-Headline outputs:
-
-- Accuracy against speed and against memory, showing which configurations are
-  best on every measure at once (the Pareto frontier).
-- Accuracy against quantisation level for each model and task.
-- Throughput and temperature over time for sustained runs.
-- Error analysis: which kinds of questions break first under compression.
-
----
-
-## Methodology and reproducibility
-
-- **Repeated runs:** each configuration runs several times; report means with
-  confidence intervals (e.g. bootstrap over questions), not single numbers.
-- **Fixed inputs:** the same questions, prompt templates and seeds for every
-  configuration. Prompts live in versioned files, not inline in code.
-- **One config per experiment:** each run is fully described by a YAML file in
-  `configs/`; results record the config's hash.
-- **Pinned everything:** model checksums, llama.cpp commit hash, Python
-  dependencies via `uv.lock`.
-- **Consistent hardware state:** note cooling setup, let the Pi cool between
-  runs (or record the starting temperature), and avoid other load during runs.
-- **Report negatives:** optimisations that don't help are results too.
+Large files (weights and GGUFs) live outside git; the journal stores their
+checksums so results can be reproduced.
 
 ---
 
@@ -206,16 +237,21 @@ Bonsai/
 ├── README.md
 ├── pyproject.toml
 ├── uv.lock
-├── configs/            # YAML experiment and model configs
-├── prompts/            # Versioned prompt templates
+├── assets/              # Logo and images
+├── configs/
+│   ├── pots/            # Hardware profiles
+│   └── seasons/         # One YAML file per season or experiment
+├── prompts/             # Versioned prompt templates
 ├── src/bonsai/
-│   ├── runner.py       # Sends prompts to the Pi, collects outputs and timings
-│   ├── tasks/          # Dataset loading and scoring per task
-│   ├── telemetry.py    # Pi temperature, clock, throttling, power
-│   └── store.py        # SQLite results storage
-├── scripts/            # Setup helpers (e.g. building llama.cpp on the Pi)
-├── analysis/           # Notebooks and plotting scripts
-├── results/            # Exported tables and figures (databases are git-ignored)
+│   ├── cli.py           # The `bonsai` command
+│   ├── journal.py       # SQLite lineage store
+│   ├── pot.py           # Hardware profiling and telemetry on the Pi
+│   ├── prune/           # Pruning operations (depth first)
+│   ├── repot.py         # GGUF conversion, quantisation, reference checks
+│   └── measure/         # Quality on the bench, speed and heat in the pot
+├── scripts/             # Setup helpers (e.g. building llama.cpp on the Pi)
+├── analysis/            # Notebooks and plotting scripts
+├── results/             # Exported tables, figures and write-ups
 └── tests/
 ```
 
@@ -226,42 +262,47 @@ Bonsai/
 - Python 3.11+, managed with **uv**.
 - **ruff** for linting and formatting, **mypy** for type checks, **pytest**
   for tests.
-- **pre-commit** hooks for the above; **GitHub Actions** CI running them on
-  every push.
+- **pre-commit** hooks for the above; **GitHub Actions** CI on every push.
 - **Conventional commits** (`feat:`, `fix:`, `docs:`, `chore:` ...).
-- Large files (models, results databases) stay out of git; see `.gitignore`.
+- **Everything enters `main` through a branch and a pull request.** No direct
+  commits to `main`.
+- Large files (models, GGUFs, databases) stay out of git; see `.gitignore`.
 
 ---
 
-## Roadmap
+## Roadmap: the seasons ahead
 
-**Phase 0: setup**
+**Phase 0: Groundwork**
 - [ ] Record Pi and PC hardware details in this README
 - [ ] Build llama.cpp on the Pi; run one 1B model by hand
 - [ ] Set up uv, ruff, mypy, pytest, pre-commit and CI
 
-**Phase 1: first result (E1, small)**
-- [ ] Minimal harness: PC sends a question to the Pi, gets the answer, scores
-      it and stores speed, accuracy and temperature
-- [ ] One 1B model at three quantisation levels on 100 GSM8K questions
-- [ ] First accuracy-against-speed plot
+**Phase 1: Nursery** *(see above)*
+- [ ] Pot profile, measuring, journal
+- [ ] Off-the-shelf frontier
+- [ ] Depth pruning, repotting and reference checks
+- [ ] First frontier plot and write-up
 
-**Phase 2: full quantisation sweep (E1)**
-- [ ] More models and quantisation levels; add ARC/SciQ
-- [ ] Repeated runs and confidence intervals
-- [ ] Error analysis by question type
+**Phase 2: Wiring**
+- [ ] Heal pruned trees by distillation from their seed
+- [ ] Width pruning (attention heads, MLP channels), kept GGUF-compatible
+- [ ] Do healed trees reach the frontier, or beat it?
 
-**Phase 3: the main question and optimisations (E2, E3)**
-- [ ] Equal-time-budget comparison with majority voting
-- [ ] Inference optimisation study
+**Phase 3: Shaping**
+- [ ] Task-specific cultivation: prune and wire a tree for one job (e.g. maths
+      or JSON extraction)
+- [ ] Grammar-constrained output as part of the shape
+- [ ] Equal-time comparisons: one large answer vs several small answers with a
+      majority vote
 
-**Phase 4: constrained output and sustained running (E4, E5)**
-- [ ] Grammar-constrained extraction
-- [ ] Long runs with throttling analysis
-
-**Phase 5: write-up**
-- [ ] Findings section in this README (or a separate write-up), including what
-      didn't work
+**Later: the wider garden**
+- [ ] Expert pruning on small mixture-of-experts seeds, keeping only the
+      experts a task uses
+- [ ] Streaming experts from NVMe on the Pi, as an experiment
+- [ ] A small dependency-free inference engine, freeing pruning from GGUF's
+      same-shape-per-layer limit
+- [ ] Growing models upward rather than cutting them down
+- [ ] Long sustained runs and throttling analysis
 
 ---
 
@@ -269,22 +310,42 @@ Bonsai/
 
 | Decision | Reason |
 |---|---|
-| CPU only, Pi + PC, no extra hardware | Keep it simple and focused on what small hardware can do. |
-| llama.cpp and GGUF | The most widely used CPU inference engine; runs well on ARM; wide range of quantisation levels. |
-| PC orchestrates, Pi only runs models | Keeps the Pi's resources for the model being measured. |
-| Public benchmarks with fixed subsets | Comparable across configurations and with published numbers; no labelling needed. |
-| SQLite for results | One file, easy to query, no server. |
+| A framework for cultivating models, not only a benchmark | Measuring alone answers "what exists"; cultivating asks "what can we make". The benchmark becomes the baseline. |
+| Bytes per token as the central budget | On CPUs, memory bandwidth sets the speed ceiling. |
+| CPU only, Pi + PC, no extra hardware | Keep it focused on what small hardware can do. |
+| llama.cpp and GGUF as the first runtime | Widely used, runs well on ARM, wide range of quantisation levels. |
+| Quality measured on the PC, speed and heat on the Pi | Accuracy doesn't depend on the hardware for the same GGUF and settings; Pi time is the scarce resource. |
+| Depth pruning first | Cheap, well studied, and keeps models GGUF-compatible. |
+| No training in Phase 1 | Training needs a GPU decision; pruning alone establishes the loop and the gap healing must close. |
+| SQLite for the journal | One file, easy to query, no server. |
+| Everything into `main` via pull request | Keeps history reviewable. |
 
 ---
 
 ## Open questions
 
-- Which Pi model and how much RAM? This sets the largest usable model.
-- Is active cooling needed for fair sustained-performance runs?
-- Which extraction dataset to use, or build a small one?
-- How to measure power reliably without extra hardware?
+- Which Pi model and how much RAM? SD card or NVMe? This sets the pot.
+- Does the PC have a GPU, and how much VRAM? This decides whether Phase 2
+  wiring can run locally.
+- Which task should the first specialised tree be shaped for?
+- Which importance score works best for choosing layers to cut on small models?
 - How many repeats per configuration are enough for stable confidence
   intervals?
+- Is active cooling needed for fair sustained measurements?
+
+---
+
+## Prior art
+
+Bonsai builds on published work rather than inventing new techniques:
+
+- [llama.cpp](https://github.com/ggml-org/llama.cpp): the CPU runtime and GGUF
+  format.
+- Layer removal: ShortGPT; *The Unreasonable Ineffectiveness of the Deeper
+  Layers*.
+- Structured pruning: LLM-Pruner, SliceGPT, Sheared-LLaMA.
+- Prune then distill: NVIDIA's Minitron.
+- Minimal inference engines: [llama2.c](https://github.com/karpathy/llama2.c).
 
 ---
 
