@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from conftest import MakeGguf
 from typer.testing import CliRunner
 
 from bonsai.bench import (
@@ -135,6 +136,17 @@ def test_compare_keeps_generation_runs_only() -> None:
     assert comparison.effective_bandwidth_gbs == pytest.approx(5.0)
 
 
+def test_compare_uses_bytes_read_per_token_when_known() -> None:
+    runs = [parse_run(record())]
+
+    (comparison,) = compare_with_ceiling(POT, runs, {"small-q4_k_m.gguf": 250_000_000})
+
+    # Reading 250 MB per token at 10 GB/s allows 40 tokens/s.
+    assert comparison.bytes_per_token == 250_000_000
+    assert comparison.ceiling_tokens_per_second == pytest.approx(40.0)
+    assert comparison.effective_bandwidth_gbs == pytest.approx(2.5)
+
+
 def test_report_orders_trees_by_size() -> None:
     runs = [
         parse_run(record(model_filename="big.gguf", model_size=1_000_000_000)),
@@ -142,13 +154,30 @@ def test_report_orders_trees_by_size() -> None:
         parse_run(record(model_filename="small.gguf")),
     ]
 
-    lines = format_report(POT, runs).splitlines()
+    lines = format_report(POT, runs, {"small.gguf": 400_000_000}).splitlines()
 
     assert lines[0].startswith("| Tree |")
     assert lines[2].startswith("| small.gguf |")
-    assert "| 10.0 t/s | 10.0 ± 0.5 t/s | 20.0 t/s | 50% | 5.0 GB/s |" in lines[2]
+    assert (
+        "| 400 MB | 4 | 10.0 t/s (pp64) | 10.0 ± 0.5 t/s (tg128) | 25.0 t/s "
+        "| 40% | 4.0 GB/s |"
+    ) in lines[2]
     assert lines[3].startswith("| big.gguf |")
-    assert "| - | 10.0 ± 0.5 t/s | 10.0 t/s | 100% |" in lines[3]
+    assert "| * | 4 | - | 10.0 ± 0.5 t/s (tg128) | 10.0 t/s | 100% |" in lines[3]
+
+
+def test_report_has_a_row_per_thread_count_and_length() -> None:
+    runs = [
+        parse_run(record(n_threads=4, n_gen=1024)),
+        parse_run(record(n_threads=4)),
+        parse_run(record(n_threads=1)),
+    ]
+
+    rows = format_report(POT, runs).splitlines()[2:]
+
+    assert [row.split(" | ")[4] for row in rows] == ["1", "4", "4"]
+    assert "(tg128)" in rows[1]
+    assert "(tg1024)" in rows[2]
 
 
 def test_report_marks_missing_generation() -> None:
@@ -184,3 +213,21 @@ def test_cli_report_rejects_bad_results(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "bench.jsonl:1" in result.output
+
+
+def test_cli_report_counts_bytes_from_trees(
+    tmp_path: Path, make_gguf: MakeGguf
+) -> None:
+    pot_file = Path(__file__).resolve().parents[1] / "configs/pots/pi5-4gb.toml"
+    make_gguf(
+        "small-q4_k_m.gguf", **{"token_embd.weight": 250_000, "output.weight": 250_000}
+    )
+    results = write_jsonl(tmp_path / "bench.jsonl", record(), record())
+
+    result = runner.invoke(
+        app,
+        ["bench", "report", str(pot_file), str(results), "--trees", str(tmp_path)],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "| 1 MB | 4 |" in result.output

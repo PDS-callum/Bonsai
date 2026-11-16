@@ -8,6 +8,7 @@ import typer
 from bonsai import __version__
 from bonsai.bench import BenchError, format_report, load_runs
 from bonsai.pot import GIB, Pot, PotError, load_pot
+from bonsai.weights import weight_bytes
 
 app = typer.Typer(
     name="bonsai",
@@ -76,24 +77,30 @@ def pot_ceiling(
     weights: Annotated[
         Path,
         typer.Argument(
-            help="Model file (e.g. a GGUF) whose size approximates the bytes "
-            "read per token.",
+            help="The tree's GGUF file.",
             exists=True,
             dir_okay=False,
         ),
     ],
 ) -> None:
-    """Estimate the fastest generation a model could reach in a pot."""
+    """Estimate the fastest generation a tree could reach in a pot."""
     pot = _load(pot_file)
-    size = weights.stat().st_size
-    ceiling = pot.ceiling_tokens_per_second(size)
-    typer.echo(f"{weights.name}: {size / 1e6:.0f} MB")
+    try:
+        counted = weight_bytes(weights)
+    except (OSError, ValueError) as error:
+        typer.echo(f"error: cannot read {weights} as GGUF: {error}", err=True)
+        raise typer.Exit(1) from error
+    ceiling = pot.ceiling_tokens_per_second(counted.per_token)
+    typer.echo(f"{weights.name}")
+    typer.echo(f"  weights         {counted.total / 1e6:.0f} MB")
+    typer.echo(f"  read per token  {counted.per_token / 1e6:.0f} MB")
     typer.echo(
-        f"  ceiling   {ceiling:.1f} tokens/s at {pot.read_bandwidth_gbs:.1f} GB/s"
+        f"  ceiling         {ceiling:.1f} tokens/s at {pot.read_bandwidth_gbs:.1f} GB/s"
     )
     typer.echo(
-        f"  fits      {'yes' if pot.fits(size) else 'no'} "
-        f"(budget {pot.memory_budget_bytes / GIB:.2f} GiB)"
+        f"  weights fit     {'yes' if pot.fits(counted.total) else 'no'} "
+        f"(budget {pot.memory_budget_bytes / GIB:.2f} GiB; "
+        "the runtime needs more on top)"
     )
 
 
@@ -106,6 +113,15 @@ def bench_report(
             help="llama-bench JSONL output (-o jsonl).", exists=True, dir_okay=False
         ),
     ],
+    trees: Annotated[
+        Path | None,
+        typer.Option(
+            help="Directory holding the measured GGUFs, to count the bytes each "
+            "reads per token. Without it, whole model sizes are used.",
+            exists=True,
+            file_okay=False,
+        ),
+    ] = None,
 ) -> None:
     """Tabulate tree speeds against the pot's bytes-per-token ceiling."""
     pot = _load(pot_file)
@@ -114,4 +130,10 @@ def bench_report(
     except BenchError as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error
-    typer.echo(format_report(pot, runs), nl=False)
+    per_token: dict[str, int] = {}
+    if trees:
+        for run in runs:
+            path = trees / run.model_file
+            if run.model_file not in per_token and path.is_file():
+                per_token[run.model_file] = weight_bytes(path).per_token
+    typer.echo(format_report(pot, runs, per_token), nl=False)

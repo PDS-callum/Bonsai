@@ -11,6 +11,7 @@ weight read and is limited by arithmetic instead.
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -108,6 +109,9 @@ class CeilingComparison:
     """A generation run set against the pot's bytes-per-token ceiling."""
 
     run: BenchRun
+    bytes_per_token: int
+    """Bytes the tree reads per token: its per-token weight bytes if known,
+    otherwise every tensor byte (which overstates it)."""
     ceiling_tokens_per_second: float
 
     @property
@@ -116,58 +120,76 @@ class CeilingComparison:
 
     @property
     def effective_bandwidth_gbs(self) -> float:
-        """The read bandwidth the run implies if it reads every weight once."""
-        return self.run.tokens_per_second * self.run.model_bytes / 1e9
+        """The read bandwidth the run implies, reading its bytes once per token."""
+        return self.run.tokens_per_second * self.bytes_per_token / 1e9
 
 
-def compare_with_ceiling(pot: Pot, runs: list[BenchRun]) -> list[CeilingComparison]:
-    """Set every generation run against the pot's ceiling for its model size."""
-    return [
-        CeilingComparison(run, pot.ceiling_tokens_per_second(run.model_bytes))
-        for run in runs
-        if run.is_generation
-    ]
+def compare_with_ceiling(
+    pot: Pot, runs: list[BenchRun], bytes_per_token: Mapping[str, int] | None = None
+) -> list[CeilingComparison]:
+    """Set every generation run against the pot's ceiling.
 
-
-def format_report(pot: Pot, runs: list[BenchRun]) -> str:
-    """A Markdown table of each tree's speeds against the pot's ceiling.
-
-    Trees appear in order of size. Prompt speed comes from the tree's
-    prompt-processing run; generation speed, the ceiling and the fraction of it
-    reached come from its generation run.
+    ``bytes_per_token`` maps tree file names to the bytes each reads per token
+    (see ``bonsai.weights``). Trees missing from it fall back to llama-bench's
+    model size, which counts the whole embedding table and so understates the
+    ceiling.
     """
-    by_model: dict[str, dict[str, BenchRun]] = {}
+    known = bytes_per_token or {}
+    comparisons = []
     for run in runs:
-        kind = "tg" if run.is_generation else "pp" if run.n_gen == 0 else None
-        if kind:
-            by_model.setdefault(run.model_file, {})[kind] = run
+        if run.is_generation:
+            size = known.get(run.model_file, run.model_bytes)
+            comparisons.append(
+                CeilingComparison(run, size, pot.ceiling_tokens_per_second(size))
+            )
+    return comparisons
+
+
+def format_report(
+    pot: Pot, runs: list[BenchRun], bytes_per_token: Mapping[str, int] | None = None
+) -> str:
+    """A Markdown table of tree speeds against the pot's ceiling.
+
+    Each generation run gets a row, beside the prompt speed measured for the
+    same tree at the same thread count. A tree measured only for prompt speed
+    gets a row of its own. Rows are ordered by tree size, then threads, then
+    generation length. "Read per token" shows ``*`` where it is unknown; the
+    ceiling then uses llama-bench's whole model size.
+    """
+    known = bytes_per_token or {}
+    prompts = {(r.model_file, r.threads): r for r in runs if r.n_gen == 0}
+    rows: list[tuple[BenchRun, BenchRun | None, CeilingComparison | None]] = [
+        (c.run, prompts.get((c.run.model_file, c.run.threads)), c)
+        for c in compare_with_ceiling(pot, runs, bytes_per_token)
+    ]
+    with_generation = {(run.model_file, run.threads) for run, _, _ in rows}
+    rows += [
+        (pp, pp, None) for key, pp in prompts.items() if key not in with_generation
+    ]
+    rows.sort(key=lambda row: (row[0].model_bytes, row[0].threads, row[0].n_gen))
 
     lines = [
-        "| Tree | Type | Size | Prompt | Generation | Ceiling | Of ceiling "
-        "| Implied bandwidth |",
-        "|---|---|---|---|---|---|---|---|",
+        "| Tree | Type | Size | Read per token | Threads | Prompt | Generation "
+        "| Ceiling | Of ceiling | Implied bandwidth |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
-    ordered = sorted(
-        by_model.items(), key=lambda item: next(iter(item[1].values())).model_bytes
-    )
-    for model_file, tests in ordered:
-        any_run = next(iter(tests.values()))
-        pp = tests.get("pp")
-        tg = tests.get("tg")
-        prompt = f"{pp.tokens_per_second:.1f} t/s" if pp else "-"
+    for run, pp, tg in rows:
+        per_token = known.get(run.model_file)
+        read = f"{per_token / 1e6:.0f} MB" if per_token else "*"
+        prompt = f"{pp.tokens_per_second:.1f} t/s ({pp.test})" if pp else "-"
         if tg:
-            comparison = CeilingComparison(
-                tg, pot.ceiling_tokens_per_second(tg.model_bytes)
+            speed = (
+                f"{tg.run.tokens_per_second:.1f} ± {tg.run.stddev:.1f} t/s "
+                f"({tg.run.test})"
             )
-            generation = f"{tg.tokens_per_second:.1f} ± {tg.stddev:.1f} t/s"
-            ceiling = f"{comparison.ceiling_tokens_per_second:.1f} t/s"
-            fraction = f"{comparison.fraction_of_ceiling:.0%}"
-            implied = f"{comparison.effective_bandwidth_gbs:.1f} GB/s"
+            ceiling = f"{tg.ceiling_tokens_per_second:.1f} t/s"
+            fraction = f"{tg.fraction_of_ceiling:.0%}"
+            implied = f"{tg.effective_bandwidth_gbs:.1f} GB/s"
         else:
-            generation = ceiling = fraction = implied = "-"
+            speed = ceiling = fraction = implied = "-"
         lines.append(
-            f"| {model_file} | {any_run.model_type} "
-            f"| {any_run.model_bytes / 1e6:.0f} MB | {prompt} | {generation} "
-            f"| {ceiling} | {fraction} | {implied} |"
+            f"| {run.model_file} | {run.model_type} | {run.model_bytes / 1e6:.0f} MB "
+            f"| {read} | {run.threads} | {prompt} | {speed} | {ceiling} "
+            f"| {fraction} | {implied} |"
         )
     return "\n".join(lines) + "\n"
