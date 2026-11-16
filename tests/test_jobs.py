@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from conftest import MakeGguf
+from conftest import MakeGguf, plain
 from typer.testing import CliRunner
 
 from bonsai import job_cli
@@ -542,7 +542,7 @@ def test_cli_needs_a_host(monkeypatch: pytest.MonkeyPatch) -> None:
     result = cli.invoke(app, ["job", "status"])
 
     assert result.exit_code != 0
-    assert "--host" in result.output
+    assert "--host" in plain(result.output)
 
 
 # A real round trip through run-detached.sh, where a POSIX shell is available.
