@@ -14,7 +14,7 @@
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
-# shellcheck source=../../configs/llama-cpp.env
+# shellcheck source=SCRIPTDIR/../../configs/llama-cpp.env
 source "$here/../../configs/llama-cpp.env"
 
 home=${BONSAI_HOME:-$HOME/bonsai}
