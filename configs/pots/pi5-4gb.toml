@@ -46,14 +46,29 @@ read_spread_gbs = [11.3, 12.6]  # worst and best of 30 runs at 4 threads
 idle_c = 47.4
 peak_c = 58.4      # during the 34-second bandwidth run; not a sustained test
 throttled = false  # get_throttled stayed 0x0 throughout
+# The first trees (results/trees/qwen2.5-0.5b-instruct/2026-11-16) ran for 11
+# minutes, including 2 minutes of continuous generation: the clock held at
+# 2.4 GHz under load, the peak was 76.0 °C and it never throttled.
+sustained_peak_c = 76.0
 
 [budget]
-# Available memory less 0.5 GiB of headroom, so neighbours never get pushed
-# out: this is room for weights, context and runtime together.
-memory_gib = 1.5
+# Peak memory of a running tree: weights, context and runtime together.
+# Profiling found about 2 GiB free, and the budget was first set at 1.5 GiB.
+# But the first trees showed that a tree peaking near 1.25 GB still pushed
+# about 0.55 GiB of the other services' memory into swap. 1.0 GiB keeps a
+# clear margin; with repacking off (see [runtime]) a 1B tree at 4-bit fits.
+memory_gib = 1.0
 # The SD card has about 10 GB free; trees live on the PC and visit one at a
 # time, so a small budget is enough and leaves room for everything else.
 storage_gib = 4.0
-# All four cores: token generation is bandwidth-bound and the services were
-# idle (load under 0.1) while profiling.
-threads = 4
+# Three cores: in the first thread sweep, generation was fastest at 3 threads
+# (28.6 tokens/s; 27.5 at 4), and the fourth core stays free for the other
+# services.
+threads = 3
+
+[runtime]
+# llama.cpp repacks some quantised weights into a second, ARM-friendly copy.
+# On this pot that roughly doubles prompt speed but costs 340-510 MB of memory
+# and makes generation slightly slower (Q4_0: 29.8 tokens/s without it, 28.2
+# with). Memory is the scarcer budget, so trees run without it.
+repack = false

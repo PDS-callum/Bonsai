@@ -98,7 +98,7 @@ def test_shipped_pi_profile_loads() -> None:
     pot = load_pot(PI5)
 
     assert pot.name == "pi5-4gb"
-    assert pot.threads == 4
+    assert pot.threads == 3
     assert 5 < pot.read_bandwidth_gbs < 20
 
 
