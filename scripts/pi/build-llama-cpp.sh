@@ -8,7 +8,8 @@
 # Needs git, a C/C++ compiler and python3. If cmake isn't installed, it is
 # installed from PyPI into $BONSAI_HOME/tools, so no root access is needed.
 #
-# Usage: build-llama-cpp.sh <ref>
+# Usage: build-llama-cpp.sh <ref> [expected-commit]
+#   If expected-commit is given, the build stops unless <ref> resolves to it.
 # Environment:
 #   BONSAI_HOME  working directory on the Pi (default: ~/bonsai)
 #   JOBS         parallel compile jobs (default: 2, to leave RAM for other
@@ -16,8 +17,12 @@
 
 set -euo pipefail
 
-[[ $# -eq 1 ]] || { echo "usage: $(basename "$0") <ref>" >&2; exit 2; }
+[[ $# -ge 1 && $# -le 2 ]] || {
+    echo "usage: $(basename "$0") <ref> [expected-commit]" >&2
+    exit 2
+}
 ref=$1
+expected_commit=${2:-}
 home=${BONSAI_HOME:-$HOME/bonsai}
 jobs=${JOBS:-2}
 src="$home/llama.cpp"
@@ -44,6 +49,10 @@ fi
 git -C "$src" fetch --quiet --tags origin
 git -C "$src" -c advice.detachedHead=false checkout --quiet "$ref"
 commit=$(git -C "$src" rev-parse HEAD)
+if [[ -n $expected_commit && $commit != "$expected_commit" ]]; then
+    echo "$ref resolved to $commit, expected $expected_commit" >&2
+    exit 1
+fi
 log "checked out $ref ($commit)"
 
 cmake_flags=(
