@@ -34,26 +34,7 @@ gcc -O3 -march=native -fopenmp -Wall -Wextra -o "$membw" "$script_dir/membw.c"
 echo "== facts before"
 python3 "$script_dir/pot_facts.py" "$home" > "$out_dir/facts-before.json"
 
-sample_telemetry() {
-    echo "time_s,temp_c,arm_clock_hz,throttled,load_1m,mem_available_kib"
-    local start
-    start=$(date +%s.%N)
-    while true; do
-        local now temp clock throttled load mem
-        now=$(date +%s.%N)
-        temp=$(< /sys/class/thermal/thermal_zone0/temp)
-        clock=$(vcgencmd measure_clock arm | cut -d= -f2)
-        throttled=$(vcgencmd get_throttled | cut -d= -f2)
-        load=$(cut -d' ' -f1 /proc/loadavg)
-        mem=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
-        awk -v t="$now" -v s="$start" -v c="$temp" \
-            'BEGIN { printf "%.1f,%.1f,", t - s, c / 1000 }'
-        echo "$clock,$throttled,$load,$mem"
-        sleep 1
-    done
-}
-
-sample_telemetry > "$out_dir/telemetry.csv" &
+"$script_dir/telemetry.sh" > "$out_dir/telemetry.csv" &
 sampler=$!
 trap 'kill "$sampler" 2>/dev/null || true' EXIT
 

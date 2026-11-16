@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from conftest import MakeGguf
 from typer.testing import CliRunner
 
 from bonsai.cli import app
@@ -97,11 +98,13 @@ def test_shipped_pi_profile_loads() -> None:
     pot = load_pot(PI5)
 
     assert pot.name == "pi5-4gb"
-    assert pot.threads == 4
+    assert pot.threads == 3
     assert 5 < pot.read_bandwidth_gbs < 20
 
 
-def test_cli_ceiling_reports_tokens_per_second(tmp_path: Path) -> None:
+def test_cli_ceiling_counts_bytes_read_per_token(
+    tmp_path: Path, make_gguf: MakeGguf
+) -> None:
     pot_file = tmp_path / "pot.toml"
     pot_file.write_text(
         'name = "test"\n'
@@ -110,14 +113,27 @@ def test_cli_ceiling_reports_tokens_per_second(tmp_path: Path) -> None:
         "[budget]\nmemory_gib = 1.5\nstorage_gib = 4\nthreads = 4\n",
         encoding="utf-8",
     )
-    weights = tmp_path / "tree.gguf"
-    weights.write_bytes(b"\0" * 1_000_000)
+    # 4 bytes per value: 2 MB of weights, of which the 1 MB output layer is
+    # read per token; the embedding table is only looked up.
+    weights = make_gguf(**{"token_embd.weight": 250_000, "output.weight": 250_000})
 
     result = runner.invoke(app, ["pot", "ceiling", str(pot_file), str(weights)])
 
     assert result.exit_code == 0, result.output
-    assert "10000.0 tokens/s" in result.output
-    assert "fits      yes" in result.output
+    assert "weights         2 MB" in result.output
+    assert "read per token  1 MB" in result.output
+    assert "ceiling         10000.0 tokens/s" in result.output
+    assert "weights fit     yes" in result.output
+
+
+def test_cli_ceiling_rejects_non_gguf(tmp_path: Path) -> None:
+    weights = tmp_path / "not.gguf"
+    weights.write_bytes(b"not a gguf file")
+
+    result = runner.invoke(app, ["pot", "ceiling", str(PI5), str(weights)])
+
+    assert result.exit_code == 1
+    assert "cannot read" in result.output
 
 
 def test_cli_show_reports_invalid_profile(tmp_path: Path) -> None:
