@@ -1,0 +1,59 @@
+# The pot: a Raspberry Pi 5 (4 GB) shared with other always-on services.
+#
+# Measured facts come from scripts/pi/profile-pot.sh; the raw output of the run
+# behind these numbers is in results/pots/pi5-4gb/2026-11-16/. Budgets are
+# decisions, made from those facts, and each says why.
+
+name = "pi5-4gb"
+description = "Raspberry Pi 5 Model B, 4 GB, SD card, shared with other services"
+profiled_at = 2026-11-16
+
+[machine]
+model = "Raspberry Pi 5 Model B Rev 1.1"
+os = "Debian GNU/Linux 13 (trixie)"
+kernel = "6.12.62+rpt-rpi-2712"
+storage = "32 GB SD card, no NVMe"
+cooling = "Active cooler (PWM fan)"
+
+[cpu]
+model = "Cortex-A76"
+cores = 4
+min_mhz = 1500
+max_mhz = 2400
+governor = "ondemand"
+# Has the dot-product instructions (asimddp) but not int8 matrix multiply
+# (i8mm), which decides which llama.cpp kernels can run.
+features = ["asimd", "asimddp", "asimdhp", "fphp", "asimdrdm", "atomics", "crc32"]
+caches = "L1d 64 KiB and L2 512 KiB per core, L3 2 MiB shared"
+
+[memory]
+total_gib = 3.95
+available_gib = 1.97   # MemAvailable with the other services running
+swap_gib = 2.0
+swap_free_gib = 1.03   # the other services already push about 1 GiB to swap
+mlock_limit_mib = 8    # too low for --mlock; trees cannot be pinned in RAM
+
+# Read bandwidth sets the speed ceiling. Median of 10 runs over 256 MiB arrays
+# (30 runs at 4 threads); full samples are in membw.jsonl.
+[bandwidth]
+read_gbs = 12.4            # 4 threads: what trees run with
+read_gbs_1_thread = 13.8   # one core already saturates memory
+copy_gbs = 8.4             # 4 threads, STREAM convention
+triad_gbs = 8.0            # 4 threads, STREAM convention
+read_spread_gbs = [11.3, 12.6]  # worst and best of 30 runs at 4 threads
+
+[thermal]
+idle_c = 47.4
+peak_c = 58.4      # during the 34-second bandwidth run; not a sustained test
+throttled = false  # get_throttled stayed 0x0 throughout
+
+[budget]
+# Available memory less 0.5 GiB of headroom, so neighbours never get pushed
+# out: this is room for weights, context and runtime together.
+memory_gib = 1.5
+# The SD card has about 10 GB free; trees live on the PC and visit one at a
+# time, so a small budget is enough and leaves room for everything else.
+storage_gib = 4.0
+# All four cores: token generation is bandwidth-bound and the services were
+# idle (load under 0.1) while profiling.
+threads = 4
