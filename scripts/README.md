@@ -37,7 +37,8 @@ each thread count, free memory, storage, CPU features and thermals. Copy the Pi
 scripts over (as `remote-build.sh` does), then start it detached:
 
 ```bash
-ssh user@host 'bonsai/scripts/pi/run-detached.sh profile-pot     bonsai/jobs/profile-pot -- bonsai/scripts/pi/profile-pot.sh results'
+ssh user@host bonsai/scripts/pi/run-detached.sh profile-pot \
+    bonsai/jobs/profile-pot -- bonsai/scripts/pi/profile-pot.sh results
 ```
 
 It takes under a minute and uses about 768 MiB of memory. Results land in
@@ -48,7 +49,7 @@ and update the pot's profile in [`configs/pots/`](../configs/pots).
 
 | Script | Runs on | Purpose |
 |---|---|---|
-| [`pi/profile-pot.sh`](pi/profile-pot.sh) | Pi | Run the pot measurements below, sampling thermals throughout. |
+| [`pi/profile-pot.sh`](pi/profile-pot.sh) | Pi | Run all the pot measurements, sampling thermals throughout. |
 | [`pi/membw.c`](pi/membw.c) | Pi | Read, copy and triad bandwidth over arrays far larger than the caches; prints every sample. |
 | [`pi/pot_facts.py`](pi/pot_facts.py) | Pi | JSON snapshot of hardware, memory, storage and thermals, standard library only. |
 
