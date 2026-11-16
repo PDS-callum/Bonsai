@@ -91,9 +91,10 @@ parameter count on the label:
 tokens per second  ≲  memory bandwidth  ÷  bytes of active weights
 ```
 
-A Raspberry Pi 5 has roughly 10–17 GB/s of memory bandwidth. A 1B-parameter
-model at 4-bit is about 0.6 GB, so its ceiling is somewhere around 15–25 tokens
-per second, before any other overhead.
+Bonsai's Raspberry Pi 5 reads memory at **12.4 GB/s** (measured; the
+theoretical peak is about 17 GB/s). A 1B-parameter model at 4-bit is about
+0.6 GB, so its ceiling is about 20 tokens per second, before any other
+overhead. `bonsai pot ceiling` works this out for any model file.
 
 This is what makes the pot concrete. Every pot has a bytes-per-token budget, and
 every pruning or quantisation decision is judged by what it buys within that
@@ -132,8 +133,24 @@ Pi stays indoors in the office.
 | **Raspberry Pi: the pot** | Runs repotted trees with llama.cpp on CPU only. Measures speed, peak RAM, temperature, clock speed and throttling. |
 | **PC: the potting bench** | Plants, prunes and repots trees. Measures quality (accuracy does not depend on the hardware for the same GGUF and settings, so it is cheaper to measure here). Sends trees to the Pi, collects measurements and keeps the journal. |
 
-Details to record once confirmed: Pi model and RAM, cooling, OS version,
-storage (SD card or NVMe), and the PC's CPU and GPU (if any).
+**The pot**, profiled in [`configs/pots/pi5-4gb.toml`](configs/pots/pi5-4gb.toml):
+
+| | |
+|---|---|
+| Board | Raspberry Pi 5 Model B, 4 GB, active cooler |
+| CPU | 4× Cortex-A76 at 1.5–2.4 GHz; dot-product instructions but no int8 matrix multiply (i8mm) |
+| OS | Debian 13 (trixie), 64-bit |
+| Storage | 32 GB SD card (about 10 GB free), no NVMe |
+| Read bandwidth | 12.4 GB/s at 4 threads; 13.8 GB/s from a single core |
+| Free memory | About 2 GiB: the Pi also runs other always-on services |
+| Budget | 1.5 GiB of memory per tree, 4 GiB of storage, 4 threads |
+
+Two constraints come from sharing the Pi. Trees get only what the other
+services leave, so the memory budget is about a third of the board's RAM. And
+the memory-lock limit is 8 MiB, so `--mlock` cannot pin a tree in RAM.
+
+**The potting bench:** AMD Ryzen 7 7700X (8 cores), 64 GB RAM, NVIDIA RTX 4070
+(12 GB), Windows 11. The GPU is enough to heal 0.5B–1.5B trees in Phase 2.
 
 ---
 
@@ -208,7 +225,7 @@ expert pruning, a custom inference engine, and growing models upward.
 
 ### Done when
 
-- [ ] A pot profile for the Pi exists
+- [x] A pot profile for the Pi exists
 - [ ] The off-the-shelf frontier is measured for at least two seed families
 - [ ] At least one seed has been depth-pruned at several cut sizes, repotted,
       checked and measured
@@ -238,7 +255,7 @@ checksums so results can be reproduced.
 
 ## Planned repository layout
 
-Not yet created; a guide for when code is added.
+Partly built; the rest is a guide for what comes next.
 
 ```
 Bonsai/
@@ -248,13 +265,13 @@ Bonsai/
 ├── uv.lock
 ├── assets/              # Logo and images
 ├── configs/
-│   ├── pots/            # Hardware profiles
+│   ├── pots/            # Pot profiles (TOML), one per machine
 │   └── seasons/         # One YAML file per season or experiment
 ├── prompts/             # Versioned prompt templates
 ├── src/bonsai/
 │   ├── cli.py           # The `bonsai` command
 │   ├── journal.py       # SQLite lineage store
-│   ├── pot.py           # Hardware profiling and telemetry on the Pi
+│   ├── pot.py           # Pot profiles and the bytes-per-token ceiling
 │   ├── prune/           # Pruning operations (depth first)
 │   ├── repot.py         # GGUF conversion, quantisation, reference checks
 │   └── measure/         # Quality on the bench, speed and heat in the pot
@@ -288,6 +305,7 @@ Requires [uv](https://docs.astral.sh/uv/).
 uv sync                      # create the environment and install everything
 uv run pre-commit install    # run the checks on every commit
 uv run bonsai --version
+uv run bonsai pot show configs/pots/pi5-4gb.toml
 ```
 
 The same checks CI runs:
@@ -304,12 +322,14 @@ uv run pytest
 ## Roadmap: the seasons ahead
 
 **Phase 0: Groundwork**
-- [ ] Record Pi and PC hardware details in this README
-- [ ] Build llama.cpp on the Pi; run one 1B model by hand
+- [x] Record Pi and PC hardware details in this README
+- [x] Build llama.cpp on the Pi and the PC at one pinned commit
+- [ ] Run one model by hand and compare it with its ceiling
 - [x] Set up uv, ruff, mypy, pytest, pre-commit and CI
 
 **Phase 1: Nursery** *(see above)*
-- [ ] Pot profile, measuring, journal
+- [x] Pot profile
+- [ ] Measuring, journal
 - [ ] Off-the-shelf frontier
 - [ ] Depth pruning, repotting and reference checks
 - [ ] First frontier plot and write-up
@@ -351,20 +371,25 @@ uv run pytest
 | SQLite for the journal | One file, easy to query, no server. |
 | uv, ruff and strict mypy | Fast, reproducible environments from a lock file; one tool for linting and formatting; types checked everywhere. |
 | Typer for the CLI | Commands defined from type hints, with little boilerplate. |
+| Pot profiles in TOML | Read by Python's standard library, with comments to explain each budget. |
+| A tree's memory budget is free memory less 0.5 GiB | The Pi is shared; trees must never push the other services out. |
+| Read bandwidth at 4 threads sets the ceiling | It is what trees run with; the single-core figure is higher but not what inference sees. |
 | Everything into `main` via pull request | Keeps history reviewable. |
 
 ---
 
 ## Open questions
 
-- Which Pi model and how much RAM? SD card or NVMe? This sets the pot.
-- Does the PC have a GPU, and how much VRAM? This decides whether Phase 2
-  wiring can run locally.
 - Which task should the first specialised tree be shaped for?
 - Which importance score works best for choosing layers to cut on small models?
 - How many repeats per configuration are enough for stable confidence
   intervals?
-- Is active cooling needed for fair sustained measurements?
+- Does the active cooler hold the clock at 2.4 GHz through long measuring
+  runs? A 34-second bandwidth run peaked at 58 °C without throttling.
+- How much do the Pi's other services move measurements? Bandwidth varied by
+  about 10% between runs.
+- Is it worth raising the memory-lock limit so trees can be pinned with
+  `--mlock`, given swap is already in use?
 
 ---
 
@@ -384,7 +409,19 @@ Bonsai builds on published work rather than inventing new techniques:
 
 ## Results
 
-None yet.
+**Pot profile** (2026-11-16, raw data in
+[`results/pots/pi5-4gb/2026-11-16`](results/pots/pi5-4gb/2026-11-16)):
+
+| Kernel | 1 thread | 2 threads | 3 threads | 4 threads |
+|---|---|---|---|---|
+| Read | 13.8 GB/s | 13.3 GB/s | 12.9 GB/s | 12.4 GB/s |
+| Copy | 11.9 GB/s | 10.2 GB/s | 9.1 GB/s | 8.4 GB/s |
+| Triad | 11.1 GB/s | 9.1 GB/s | 8.6 GB/s | 7.9 GB/s |
+
+Medians of 10 runs. A single core saturates the memory bus, and adding threads
+slightly *lowers* bandwidth as they compete for it. Extra cores can still help
+with the arithmetic of unpacking quantised weights, but they cannot raise the
+ceiling. Thirty runs at 4 threads ranged from 11.3 to 12.6 GB/s.
 
 ---
 
