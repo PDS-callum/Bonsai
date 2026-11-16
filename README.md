@@ -43,6 +43,7 @@ work happens.
 - [Open questions](#open-questions)
 - [Prior art](#prior-art)
 - [Results](#results)
+- [License](#license)
 
 ---
 
@@ -242,6 +243,7 @@ Not yet created; a guide for when code is added.
 ```
 Bonsai/
 ├── README.md
+├── LICENSE
 ├── pyproject.toml
 ├── uv.lock
 ├── assets/              # Logo and images
@@ -383,3 +385,14 @@ Bonsai builds on published work rather than inventing new techniques:
 ## Results
 
 None yet.
+
+---
+
+## License
+
+Bonsai's code is licensed under the [Apache License 2.0](LICENSE).
+
+The license covers this repository's code only, not the models it works on.
+Every seed keeps its own license, and so does every tree grown from it: Qwen2.5
+models are Apache-2.0, while Llama 3.2 models are under Meta's Llama 3.2
+Community License. Check a seed's terms before sharing what you grow from it.
