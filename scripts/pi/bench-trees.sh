@@ -23,7 +23,7 @@
 # Environment: THREADS (default 4), REPACK (llama.cpp weight repacking, 1 or 0;
 #              default 1), REPEATS (5), PROMPT_TOKENS (128), GEN_TOKENS (128),
 #              SUSTAINED_TOKENS (1024), REFERENCE (file-name pattern for the
-#              reference tree, default *q4_k_m*), BONSAI_HOME (~/bonsai)
+#              reference tree, default *q4_0*), BONSAI_HOME (~/bonsai)
 
 set -euo pipefail
 
@@ -36,7 +36,7 @@ repeats=${REPEATS:-5}
 prompt_tokens=${PROMPT_TOKENS:-128}
 gen_tokens=${GEN_TOKENS:-128}
 sustained_tokens=${SUSTAINED_TOKENS:-1024}
-reference=${REFERENCE:-*q4_k_m*}
+reference=${REFERENCE:-*q4_0*}
 home=${BONSAI_HOME:-$HOME/bonsai}
 script_dir=$(cd "$(dirname "$0")" && pwd)
 bin="$home/llama.cpp/build/bin"

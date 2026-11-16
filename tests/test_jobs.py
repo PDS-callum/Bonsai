@@ -412,7 +412,7 @@ def test_cli_bench_runs_trees_with_the_pots_settings(
 def test_cli_bench_waits_for_free_memory(
     fake_pot: FakeRunner, scripts: Path, make_gguf: MakeGguf, tmp_path: Path
 ) -> None:
-    tree = make_gguf("tree-q4_k_m.gguf", **{"output.weight": 1000})
+    tree = make_gguf("tree-q4_0.gguf", **{"output.weight": 1000})
     profile = write_profile(tmp_path, memory_gib=1.95)
 
     result = cli.invoke(
@@ -447,7 +447,7 @@ def test_cli_bench_checks_trees_before_contacting_the_pot(
 def test_cli_bench_reports_a_bad_profile(
     fake_pot: FakeRunner, scripts: Path, make_gguf: MakeGguf, tmp_path: Path
 ) -> None:
-    tree = make_gguf("tree-q4_k_m.gguf", **{"output.weight": 10})
+    tree = make_gguf("tree-q4_0.gguf", **{"output.weight": 10})
     profile = tmp_path / "pot.toml"
     profile.write_text('name = "test"\n', encoding="utf-8")
 
@@ -517,7 +517,7 @@ def test_cli_reports_submit_errors(
     fake_pot: FakeRunner, scripts: Path, make_gguf: MakeGguf, tmp_path: Path
 ) -> None:
     fake_pot.replies["tmux list-sessions"] = "bonsai-other-1\n"
-    tree = make_gguf("t-q4_k_m.gguf", **{"output.weight": 10})
+    tree = make_gguf("t-q4_0.gguf", **{"output.weight": 10})
     profile = write_profile(tmp_path)
 
     for args in (

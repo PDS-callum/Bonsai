@@ -136,7 +136,7 @@ def bench(
         typer.Option(
             help="File-name pattern for the tree used in the thread and sustained runs."
         ),
-    ] = "*q4_k_m*",
+    ] = "*q4_0*",
     name: Annotated[str, typer.Option(help="Job name prefix.")] = "bench",
     scripts: Scripts = DEFAULT_SCRIPTS,
 ) -> None:
