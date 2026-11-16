@@ -42,9 +42,11 @@ rm -f "$job_dir/exit_code" "$job_dir/finished_at"
     echo 'date -u +%Y-%m-%dT%H:%M:%SZ > started_at'
     printf '%q ' "$@"
     echo '> log.txt 2>&1'
-    echo 'status=$?'
-    echo 'date -u +%Y-%m-%dT%H:%M:%SZ > finished_at'
-    echo 'echo "$status" > exit_code'
+    cat <<'EOF'
+status=$?
+date -u +%Y-%m-%dT%H:%M:%SZ > finished_at
+echo "$status" > exit_code
+EOF
 } > "$job_dir/job.sh"
 chmod +x "$job_dir/job.sh"
 
