@@ -1,0 +1,7 @@
+[project]
+name = "bonsai"
+version = "0.1.0"
+description = "Small models, grown slowly on small hardware."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
