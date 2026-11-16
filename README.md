@@ -503,11 +503,10 @@ What they show:
 - **Quantisation labels say little about size.** Q2_K's file is only 3% smaller
   than Q4_0's, because small models keep their large embedding and output
   layers at higher precision. It is also *slower* than Q4_0.
-- **The CPU decides which formats are fast at prompts.** Q4_0 processes prompts
-  3.7× faster than Q4_K_M at almost the same size. llama.cpp has fast ARM
-  kernels for Q4_0 that use the dot-product instructions this Cortex-A76 has;
-  its fast K-quant kernels appear to rely on int8 matrix-multiply (i8mm), which
-  it lacks.
+- **Formats differ most at prompts.** Q4_0 processes prompts 3.7× faster than
+  Q4_K_M at almost the same size, and still 1.8× faster with repacking off.
+  Which of llama.cpp's ARM kernels each format reaches on a CPU without int8
+  matrix-multiply (i8mm) is a question for later.
 - **Memory is the binding constraint, not speed.** Quantised trees peak at
   1.6–1.9× their file size. Most of the excess is llama.cpp *repacking*
   weights into a second, ARM-friendly copy: with it off, Q4_0 and Q8_0 peak at
@@ -532,6 +531,21 @@ What they show:
   per token.
 - **Sharing has a cost.** The run pushed about 0.55 GiB of the other services'
   idle memory into swap, which is why the memory budget is now 1.0 GiB.
+
+**With the pot's settings** (3 threads, no repacking; the first job run with
+`bonsai job bench`, data in
+[`results/jobs/bench-qwen-0.5b-20261116T205904Z`](results/jobs/bench-qwen-0.5b-20261116T205904Z)):
+
+| Quantisation | Prompt | Generation | Of ceiling | Peak memory |
+|---|---|---|---|---|
+| Q4_0 | 107 t/s | **34.0 t/s** | **95%** | **494 MB** |
+| Q4_K_M | 61 t/s | **29.9 t/s** | **94%** | **558 MB** |
+
+Generation is 9–16% faster than with llama.cpp's defaults, peak memory is
+28–41% lower, and this time the other services lost nothing to swap. The price
+is prompt speed, a third of what it was for Q4_0. Q4_0 is now the reference
+tree for this pot: the fastest generation, the smallest memory and the fastest
+prompts of the 4-bit trees.
 
 ---
 
