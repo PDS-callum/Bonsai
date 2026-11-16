@@ -53,6 +53,19 @@ and update the pot's profile in [`configs/pots/`](../configs/pots).
 | [`pi/membw.c`](pi/membw.c) | Pi | Read, copy and triad bandwidth over arrays far larger than the caches; prints every sample. |
 | [`pi/pot_facts.py`](pi/pot_facts.py) | Pi | JSON snapshot of hardware, memory, storage and thermals, standard library only. |
 
+### Measuring trees
+
+`bench-trees.sh` measures every GGUF in a directory: prompt and generation speed
+with `llama-bench`, and each run's peak memory. It then runs a reference tree
+at 1–4 threads, and once more over a long generation run to see whether heat
+lowers the clock. Telemetry is sampled every second throughout.
+
+| Script | Runs on | Purpose |
+|---|---|---|
+| [`pi/bench-trees.sh`](pi/bench-trees.sh) | Pi | Speed, memory and heat for each tree, plus thread and sustained runs. |
+| [`pi/telemetry.sh`](pi/telemetry.sh) | Pi | CSV of temperature, clock, throttling, load and free memory, once a second. |
+| [`pi/peak_rss.py`](pi/peak_rss.py) | Pi | Run a command and record its peak memory (GNU `time` isn't installed). |
+
 ## The potting bench: PC
 
 ```bash
@@ -63,3 +76,14 @@ Clones the llama.cpp source at the pinned ref (for `convert_hf_to_gguf.py`) and,
 on Windows x64, downloads the official prebuilt CPU binaries for the same commit
 (including `llama-quantize`), checking their SHA-256 checksum. Everything goes
 under `~/bonsai` (override with `BONSAI_HOME`).
+
+### Fetching seeds
+
+```bash
+uv run python scripts/pc/fetch_gguf.py configs/seeds/qwen2.5-0.5b-instruct-gguf.toml
+```
+
+Downloads the GGUFs a seed manifest in [`configs/seeds/`](../configs/seeds)
+lists, from Hugging Face at the exact revision it pins. Each file is checked
+against its SHA-256 before it is moved into place under
+`~/bonsai/seeds/<name>/`. Files already present and correct are skipped.
