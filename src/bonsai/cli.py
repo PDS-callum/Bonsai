@@ -6,6 +6,7 @@ from typing import Annotated
 import typer
 
 from bonsai import __version__
+from bonsai.bench import BenchError, format_report, load_runs
 from bonsai.pot import GIB, Pot, PotError, load_pot
 
 app = typer.Typer(
@@ -16,6 +17,8 @@ app = typer.Typer(
 )
 pot_app = typer.Typer(help="Inspect pots: the hardware budgets trees must fit.")
 app.add_typer(pot_app, name="pot")
+bench_app = typer.Typer(help="Read benchmark results from the pot.")
+app.add_typer(bench_app, name="bench")
 
 PotFile = Annotated[
     Path,
@@ -92,3 +95,23 @@ def pot_ceiling(
         f"  fits      {'yes' if pot.fits(size) else 'no'} "
         f"(budget {pot.memory_budget_bytes / GIB:.2f} GiB)"
     )
+
+
+@bench_app.command("report")
+def bench_report(
+    pot_file: PotFile,
+    results: Annotated[
+        list[Path],
+        typer.Argument(
+            help="llama-bench JSONL output (-o jsonl).", exists=True, dir_okay=False
+        ),
+    ],
+) -> None:
+    """Tabulate tree speeds against the pot's bytes-per-token ceiling."""
+    pot = _load(pot_file)
+    try:
+        runs = [run for path in results for run in load_runs(path)]
+    except BenchError as error:
+        typer.echo(f"error: {error}", err=True)
+        raise typer.Exit(1) from error
+    typer.echo(format_report(pot, runs), nl=False)
