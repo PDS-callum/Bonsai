@@ -4,6 +4,10 @@
 
 <p align="center"><em>Small models, grown slowly on small hardware.</em></p>
 
+<p align="center">
+  <a href="https://github.com/PDS-callum/Bonsai/actions/workflows/ci.yml"><img src="https://github.com/PDS-callum/Bonsai/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
+
 Bonsai is a framework for cultivating small language models for small,
 CPU-bound hardware. You start from an existing open model (the **seed**),
 **prune** it to fit a hardware budget (the **pot**), shape it towards a task,
@@ -14,9 +18,11 @@ seed and the exact steps that shaped it.
 The main pot is a Raspberry Pi. A PC acts as the potting bench, where the heavy
 work happens.
 
-> **Status:** planning. No code yet. This README sets out the idea, the first
-> phase of work (**Phase 1: Nursery**) and the decisions made so far. Results
-> will be added as they come in, including the things that don't work.
+> **Status:** Phase 0 (Groundwork). The Python package, tooling and CI are set
+> up; the cultivation tools themselves are not built yet. This README sets out
+> the idea, the first phase of work (**Phase 1: Nursery**) and the decisions
+> made so far. Results will be added as they come in, including the things that
+> don't work.
 
 ---
 
@@ -31,6 +37,7 @@ work happens.
 - [The journal](#the-journal)
 - [Planned repository layout](#planned-repository-layout)
 - [Engineering conventions](#engineering-conventions)
+- [Development](#development)
 - [Roadmap: the seasons ahead](#roadmap-the-seasons-ahead)
 - [Decisions log](#decisions-log)
 - [Open questions](#open-questions)
@@ -260,13 +267,35 @@ Bonsai/
 ## Engineering conventions
 
 - Python 3.11+, managed with **uv**.
-- **ruff** for linting and formatting, **mypy** for type checks, **pytest**
-  for tests.
-- **pre-commit** hooks for the above; **GitHub Actions** CI on every push.
+- **ruff** for linting and formatting, **mypy** (strict) for type checks,
+  **pytest** for tests, **ShellCheck** for shell scripts.
+- **pre-commit** hooks for the above; **GitHub Actions** CI on every push and
+  pull request, on Python 3.11 and 3.13.
 - **Conventional commits** (`feat:`, `fix:`, `docs:`, `chore:` ...).
 - **Everything enters `main` through a branch and a pull request.** No direct
   commits to `main`.
 - Large files (models, GGUFs, databases) stay out of git; see `.gitignore`.
+
+---
+
+## Development
+
+Requires [uv](https://docs.astral.sh/uv/).
+
+```bash
+uv sync                      # create the environment and install everything
+uv run pre-commit install    # run the checks on every commit
+uv run bonsai --version
+```
+
+The same checks CI runs:
+
+```bash
+uv run ruff check
+uv run ruff format --check
+uv run mypy
+uv run pytest
+```
 
 ---
 
@@ -275,7 +304,7 @@ Bonsai/
 **Phase 0: Groundwork**
 - [ ] Record Pi and PC hardware details in this README
 - [ ] Build llama.cpp on the Pi; run one 1B model by hand
-- [ ] Set up uv, ruff, mypy, pytest, pre-commit and CI
+- [x] Set up uv, ruff, mypy, pytest, pre-commit and CI
 
 **Phase 1: Nursery** *(see above)*
 - [ ] Pot profile, measuring, journal
@@ -318,6 +347,8 @@ Bonsai/
 | Depth pruning first | Cheap, well studied, and keeps models GGUF-compatible. |
 | No training in Phase 1 | Training needs a GPU decision; pruning alone establishes the loop and the gap healing must close. |
 | SQLite for the journal | One file, easy to query, no server. |
+| uv, ruff and strict mypy | Fast, reproducible environments from a lock file; one tool for linting and formatting; types checked everywhere. |
+| Typer for the CLI | Commands defined from type hints, with little boilerplate. |
 | Everything into `main` via pull request | Keeps history reviewable. |
 
 ---
