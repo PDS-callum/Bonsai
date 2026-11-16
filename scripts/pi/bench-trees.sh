@@ -20,7 +20,8 @@
 #   build-info.json                       the llama.cpp build that ran
 #
 # Usage: bench-trees.sh <tree-dir> <out-dir>
-# Environment: REPEATS (default 5), PROMPT_TOKENS (128), GEN_TOKENS (128),
+# Environment: THREADS (default 4), REPACK (llama.cpp weight repacking, 1 or 0;
+#              default 1), REPEATS (5), PROMPT_TOKENS (128), GEN_TOKENS (128),
 #              SUSTAINED_TOKENS (1024), REFERENCE (file-name pattern for the
 #              reference tree, default *q4_k_m*), BONSAI_HOME (~/bonsai)
 
@@ -29,6 +30,8 @@ set -euo pipefail
 [[ $# -eq 2 ]] || { echo "usage: $(basename "$0") <tree-dir> <out-dir>" >&2; exit 2; }
 tree_dir=$(cd "$1" && pwd)
 out_dir=$2
+threads=${THREADS:-4}
+repack=${REPACK:-1}
 repeats=${REPEATS:-5}
 prompt_tokens=${PROMPT_TOKENS:-128}
 gen_tokens=${GEN_TOKENS:-128}
@@ -63,10 +66,12 @@ sleep 10
 : > "$out_dir/peak-rss.tsv"
 for tree in "${trees[@]}"; do
     name=$(basename "$tree")
-    echo "== $name: pp$prompt_tokens and tg$gen_tokens, $repeats repetitions"
+    echo "== $name: pp$prompt_tokens and tg$gen_tokens, $threads threads," \
+        "repack $repack, $repeats repetitions"
     python3 "$script_dir/peak_rss.py" "$out_dir/rss.tmp" -- \
-        "$bin/llama-bench" -m "$tree" -t 4 -p "$prompt_tokens" -n "$gen_tokens" \
-        -r "$repeats" -o jsonl >> "$out_dir/bench.jsonl"
+        "$bin/llama-bench" -m "$tree" -t "$threads" --repack "$repack" \
+        -p "$prompt_tokens" -n "$gen_tokens" -r "$repeats" -o jsonl \
+        >> "$out_dir/bench.jsonl"
     printf '%s\t%s\n' "$name" "$(< "$out_dir/rss.tmp")" >> "$out_dir/peak-rss.tsv"
     rm -f "$out_dir/rss.tmp"
     # Let the pot cool a little so each tree starts from a similar state.
@@ -74,13 +79,13 @@ for tree in "${trees[@]}"; do
 done
 
 echo "== threads: $(basename "$reference_tree"), tg$gen_tokens at 1-4 threads"
-"$bin/llama-bench" -m "$reference_tree" -t 1,2,3,4 -p 0 -n "$gen_tokens" \
-    -r "$repeats" -o jsonl > "$out_dir/threads.jsonl"
+"$bin/llama-bench" -m "$reference_tree" -t 1,2,3,4 --repack "$repack" \
+    -p 0 -n "$gen_tokens" -r "$repeats" -o jsonl > "$out_dir/threads.jsonl"
 sleep 15
 
 echo "== sustained: $(basename "$reference_tree"), tg$sustained_tokens x 3"
-"$bin/llama-bench" -m "$reference_tree" -t 4 -p 0 -n "$sustained_tokens" \
-    -r 3 -o jsonl > "$out_dir/sustained.jsonl"
+"$bin/llama-bench" -m "$reference_tree" -t "$threads" --repack "$repack" \
+    -p 0 -n "$sustained_tokens" -r 3 -o jsonl > "$out_dir/sustained.jsonl"
 
 # A cool-down window shows how quickly the temperature settles.
 sleep 30
