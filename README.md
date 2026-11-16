@@ -94,7 +94,14 @@ tokens per second  ≲  memory bandwidth  ÷  bytes of active weights
 Bonsai's Raspberry Pi 5 reads memory at **12.4 GB/s** (measured; the
 theoretical peak is about 17 GB/s). A 1B-parameter model at 4-bit is about
 0.6 GB, so its ceiling is about 20 tokens per second, before any other
-overhead. `bonsai pot ceiling` works this out for any model file.
+overhead.
+
+"Active weights" excludes the input embedding table: each token looks up one
+row of it rather than reading it all. In a small model with a large vocabulary
+that table is a big share of the file (a fifth of Qwen2.5-0.5B), so file size
+overstates the bytes read. `bonsai pot ceiling` counts them from the GGUF's
+tensor table. Measured trees reach **73–90%** of the ceiling it gives (see
+[Results](#results)).
 
 This is what makes the pot concrete. Every pot has a bytes-per-token budget, and
 every pruning or quantisation decision is judged by what it buys within that
@@ -143,11 +150,14 @@ Pi stays indoors in the office.
 | Storage | 32 GB SD card (about 10 GB free), no NVMe |
 | Read bandwidth | 12.4 GB/s at 4 threads; 13.8 GB/s from a single core |
 | Free memory | About 2 GiB: the Pi also runs other always-on services |
-| Budget | 1.5 GiB of memory per tree, 4 GiB of storage, 4 threads |
+| Budget | 1.0 GiB peak memory per tree, 4 GiB of storage, 3 threads, no repacking |
 
-Two constraints come from sharing the Pi. Trees get only what the other
-services leave, so the memory budget is about a third of the board's RAM. And
-the memory-lock limit is 8 MiB, so `--mlock` cannot pin a tree in RAM.
+Sharing the Pi sets the tightest constraints. Trees get only what the other
+services leave, and even a tree within the free memory pushes their idle memory
+into swap, so the memory budget is a quarter of the board's RAM. The
+memory-lock limit is 8 MiB, so `--mlock` cannot pin a tree in RAM. And trees
+run on three threads, leaving a core for the services (it is also slightly
+faster than four).
 
 **The potting bench:** AMD Ryzen 7 7700X (8 cores), 64 GB RAM, NVIDIA RTX 4070
 (12 GB), Windows 11. The GPU is enough to heal 0.5B–1.5B trees in Phase 2.
@@ -306,6 +316,9 @@ uv sync                      # create the environment and install everything
 uv run pre-commit install    # run the checks on every commit
 uv run bonsai --version
 uv run bonsai pot show configs/pots/pi5-4gb.toml
+uv run bonsai pot ceiling configs/pots/pi5-4gb.toml path/to/tree.gguf
+uv run bonsai bench report configs/pots/pi5-4gb.toml \
+    results/trees/qwen2.5-0.5b-instruct/2026-11-16/bench.jsonl
 ```
 
 The same checks CI runs:
@@ -324,13 +337,13 @@ uv run pytest
 **Phase 0: Groundwork**
 - [x] Record Pi and PC hardware details in this README
 - [x] Build llama.cpp on the Pi and the PC at one pinned commit
-- [ ] Run one model by hand and compare it with its ceiling
+- [x] Run one model by hand and compare it with its ceiling
 - [x] Set up uv, ruff, mypy, pytest, pre-commit and CI
 
 **Phase 1: Nursery** *(see above)*
 - [x] Pot profile
 - [ ] Measuring, journal
-- [ ] Off-the-shelf frontier
+- [ ] Off-the-shelf frontier (speed measured for Qwen2.5-0.5B; quality next)
 - [ ] Depth pruning, repotting and reference checks
 - [ ] First frontier plot and write-up
 
@@ -372,7 +385,11 @@ uv run pytest
 | uv, ruff and strict mypy | Fast, reproducible environments from a lock file; one tool for linting and formatting; types checked everywhere. |
 | Typer for the CLI | Commands defined from type hints, with little boilerplate. |
 | Pot profiles in TOML | Read by Python's standard library, with comments to explain each budget. |
-| A tree's memory budget is free memory less 0.5 GiB | The Pi is shared; trees must never push the other services out. |
+| A tree's memory budget is 1.0 GiB of peak memory | The Pi is shared; at 1.25 GB a tree still pushed 0.55 GiB of the other services into swap. |
+| Bytes per token leave out the input embedding table | Generation looks up one row of it per token; counting it understated ceilings by about a fifth. |
+| Trees run without weight repacking on the Pi | Repacking costs 340–510 MB of memory and slightly slows generation; it only helps prompt speed. |
+| Trees run on three threads | Fastest in the thread sweep, and leaves a core for the other services. |
+| The `gguf` package reads GGUF files | It is llama.cpp's own reader, so tensor sizes match the runtime's. |
 | Read bandwidth at 4 threads sets the ceiling | It is what trees run with; the single-core figure is higher but not what inference sees. |
 | Everything into `main` via pull request | Keeps history reviewable. |
 
@@ -384,10 +401,13 @@ uv run pytest
 - Which importance score works best for choosing layers to cut on small models?
 - How many repeats per configuration are enough for stable confidence
   intervals?
-- Does the active cooler hold the clock at 2.4 GHz through long measuring
-  runs? A 34-second bandwidth run peaked at 58 °C without throttling.
 - How much do the Pi's other services move measurements? Bandwidth varied by
-  about 10% between runs.
+  about 10% between runs; generation speed by only 1–2% within a run.
+- Why does Q2_K reach only 73% of its ceiling? Unpacking 2-bit weights may cost
+  more arithmetic than the bytes it saves, which would make it a poor choice on
+  this pot despite being the smallest.
+- Does the best thread count differ by tree size or quantisation? The sweep so
+  far covers one tree.
 - Is it worth raising the memory-lock limit so trees can be pinned with
   `--mlock`, given swap is already in use?
 
@@ -422,6 +442,59 @@ Medians of 10 runs. A single core saturates the memory bus, and adding threads
 slightly *lowers* bandwidth as they compete for it. Extra cores can still help
 with the arithmetic of unpacking quantised weights, but they cannot raise the
 ceiling. Thirty runs at 4 threads ranged from 11.3 to 12.6 GB/s.
+
+**The first trees** (2026-11-16, raw data in
+[`results/trees/qwen2.5-0.5b-instruct/2026-11-16`](results/trees/qwen2.5-0.5b-instruct/2026-11-16)):
+Qwen's own GGUFs of Qwen2.5-0.5B-Instruct, measured with `llama-bench` at 4
+threads (prompt: 128 tokens; generation: 128 tokens; 5 repetitions).
+
+| Quantisation | File | Read per token | Prompt | Generation | Ceiling | Of ceiling | Peak memory |
+|---|---|---|---|---|---|---|---|
+| Q2_K | 415 MB | 333 MB | 152 t/s | 27.3 t/s | 37.3 t/s | 73% | 740 MB |
+| Q4_0 | 429 MB | 346 MB | 336 t/s | 29.3 t/s | 35.8 t/s | 82% | 836 MB |
+| Q4_K_M | 491 MB | 392 MB | 92 t/s | 27.4 t/s | 31.6 t/s | 87% | 772 MB |
+| Q6_K | 650 MB | 500 MB | 240 t/s | 20.4 t/s | 24.8 t/s | 82% | 1209 MB |
+| Q8_0 | 676 MB | 525 MB | 261 t/s | 19.2 t/s | 23.6 t/s | 81% | 1262 MB |
+| F16 | 1266 MB | 988 MB | 32 t/s | 11.3 t/s | 12.5 t/s | 90% | 1255 MB |
+
+What they show:
+
+- **Bytes per token predict generation speed.** Every tree reaches 73–90% of
+  its ceiling, and speed falls as the bytes read rise. The ceiling only holds
+  once the embedding table is left out of the count: measured against file size,
+  four trees appeared to beat it.
+- **Quantisation labels say little about size.** Q2_K's file is only 3% smaller
+  than Q4_0's, because small models keep their large embedding and output
+  layers at higher precision. It is also *slower* than Q4_0.
+- **The CPU decides which formats are fast at prompts.** Q4_0 processes prompts
+  3.7× faster than Q4_K_M at almost the same size. llama.cpp has fast ARM
+  kernels for Q4_0 that use the dot-product instructions this Cortex-A76 has;
+  its fast K-quant kernels appear to rely on int8 matrix-multiply (i8mm), which
+  it lacks.
+- **Memory is the binding constraint, not speed.** Quantised trees peak at
+  1.6–1.9× their file size. Most of the excess is llama.cpp *repacking*
+  weights into a second, ARM-friendly copy: with it off, Q4_0 and Q8_0 peak at
+  only 1.1× their size ([data](results/trees/qwen2.5-0.5b-instruct/2026-11-16/repack)):
+
+  | Tree | Repacking | Prompt | Generation | Peak memory |
+  |---|---|---|---|---|
+  | Q4_0 | on (default) | 332 t/s | 28.2 t/s | 837 MB |
+  | Q4_0 | off | 135 t/s | 29.8 t/s | 493 MB |
+  | Q8_0 | on (default) | 254 t/s | 19.5 t/s | 1252 MB |
+  | Q8_0 | off | 139 t/s | 22.0 t/s | 741 MB |
+
+  Repacking doubles prompt speed but costs 340–510 MB and slightly *slows*
+  generation, so trees on this pot run without it.
+- **Three threads beat four.** Q4_K_M generation: 16.1 t/s on 1 thread, 25.1 on
+  2, 28.6 on 3, 27.5 on 4. Unlike the bandwidth test, one core cannot keep up
+  with unpacking the weights, but a fourth adds nothing.
+- **Heat is not a problem with the active cooler.** Over 11 minutes, including 2
+  minutes of continuous generation, the clock held at 2.4 GHz and the
+  temperature peaked at 76 °C without throttling. Long generation (1,024 tokens)
+  ran at 25.1 t/s against 27.4 for 128 tokens, as the growing context adds work
+  per token.
+- **Sharing has a cost.** The run pushed about 0.55 GiB of the other services'
+  idle memory into swap, which is why the memory budget is now 1.0 GiB.
 
 ---
 
