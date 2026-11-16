@@ -1,0 +1,7 @@
+# Normalise line endings to LF in the repository and working tree, so shell
+# scripts copied from a Windows checkout run unchanged on the Pi.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.gguf binary
