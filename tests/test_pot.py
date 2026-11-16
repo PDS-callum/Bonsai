@@ -86,6 +86,26 @@ def test_invalid_values_are_reported(
         parse_pot(data)
 
 
+def test_repack_defaults_to_llama_cpp_behaviour() -> None:
+    assert parse_pot(profile()).repack
+
+
+def test_repack_can_be_turned_off() -> None:
+    assert not parse_pot(profile(runtime={"repack": False})).repack
+
+
+@pytest.mark.parametrize(
+    ("runtime", "message"),
+    [
+        ("fast", "'runtime' must be a table"),
+        ({"repack": 1}, "'repack' must be true or false"),
+    ],
+)
+def test_invalid_runtime_is_reported(runtime: object, message: str) -> None:
+    with pytest.raises(PotError, match=message):
+        parse_pot(profile(runtime=runtime))
+
+
 def test_invalid_toml_is_reported(tmp_path: Path) -> None:
     path = tmp_path / "broken.toml"
     path.write_text("name = ", encoding="utf-8")
@@ -99,6 +119,7 @@ def test_shipped_pi_profile_loads() -> None:
 
     assert pot.name == "pi5-4gb"
     assert pot.threads == 3
+    assert not pot.repack
     assert 5 < pot.read_bandwidth_gbs < 20
 
 

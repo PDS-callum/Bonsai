@@ -22,7 +22,8 @@ name=$1
 job_dir=$2
 shift 3
 
-[[ $name =~ ^[A-Za-z0-9._-]+$ ]] || { echo "invalid job name: $name" >&2; exit 2; }
+# tmux would turn "." into "_" in the session name, so it is not allowed.
+[[ $name =~ ^[A-Za-z0-9_-]+$ ]] || { echo "invalid job name: $name" >&2; exit 2; }
 session="bonsai-$name"
 
 if tmux has-session -t "=$session" 2>/dev/null; then

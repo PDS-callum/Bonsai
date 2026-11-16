@@ -7,6 +7,7 @@ import typer
 
 from bonsai import __version__
 from bonsai.bench import BenchError, format_report, load_runs
+from bonsai.job_cli import job_app
 from bonsai.pot import GIB, Pot, PotError, load_pot
 from bonsai.weights import weight_bytes
 
@@ -20,6 +21,7 @@ pot_app = typer.Typer(help="Inspect pots: the hardware budgets trees must fit.")
 app.add_typer(pot_app, name="pot")
 bench_app = typer.Typer(help="Read benchmark results from the pot.")
 app.add_typer(bench_app, name="bench")
+app.add_typer(job_app, name="job")
 
 PotFile = Annotated[
     Path,

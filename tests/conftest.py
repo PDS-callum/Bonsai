@@ -1,3 +1,4 @@
+import re
 from collections.abc import Callable
 from pathlib import Path
 
@@ -6,6 +7,13 @@ import pytest
 from gguf import GGUFWriter
 
 MakeGguf = Callable[..., Path]
+
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def plain(text: str) -> str:
+    """Strip terminal styling, which Rich adds when it detects colour (as in CI)."""
+    return ANSI_ESCAPE.sub("", text)
 
 
 @pytest.fixture

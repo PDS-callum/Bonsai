@@ -40,6 +40,8 @@ class Pot:
     """Space for trees kept on the pot at once."""
     threads: int
     """Threads to run trees with."""
+    repack: bool = True
+    """Whether llama.cpp may repack weights into a faster but larger copy."""
 
     def ceiling_tokens_per_second(self, weight_bytes: int) -> float:
         """The fastest generation possible if every weight is read once per token."""
@@ -78,6 +80,16 @@ def parse_pot(data: dict[str, Any], where: str = "pot") -> Pot:
     storage_gib = _require(budget, "storage_gib", (int, float), f"{where} [budget]")
     threads = _require(budget, "threads", int, f"{where} [budget]")
 
+    # [runtime] is optional; without it, llama.cpp's defaults apply.
+    runtime = data.get("runtime", {})
+    if not isinstance(runtime, dict):
+        msg = f"{where}: 'runtime' must be a table"
+        raise PotError(msg)
+    repack = runtime.get("repack", True)
+    if not isinstance(repack, bool):
+        msg = f"{where} [runtime]: 'repack' must be true or false, got {repack!r}"
+        raise PotError(msg)
+
     return Pot(
         name=name,
         description=description,
@@ -91,6 +103,7 @@ def parse_pot(data: dict[str, Any], where: str = "pot") -> Pot:
             _positive(storage_gib, "storage_gib", f"{where} [budget]") * GIB
         ),
         threads=int(_positive(threads, "threads", f"{where} [budget]")),
+        repack=repack,
     )
 
 
