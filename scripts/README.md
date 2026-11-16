@@ -1,9 +1,12 @@
 # Scripts
 
-Setup helpers for the two machines in the garden. Both use the llama.cpp
-version pinned in [`configs/llama-cpp.env`](../configs/llama-cpp.env) (ref,
-commit and numbered build), so the potting bench and the pot always run
-identical code.
+Setup and measuring scripts for the two machines in the garden. Both machines
+use the llama.cpp version pinned in
+[`configs/llama-cpp.env`](../configs/llama-cpp.env) (ref, commit and numbered
+build), so the potting bench and the pot always run identical code.
+
+Day to day, `bonsai job` drives the Pi scripts (`bonsai job profile`,
+`bonsai job bench`); the commands below are what it runs, for use by hand.
 
 ## The pot: Raspberry Pi
 

@@ -37,6 +37,7 @@ work happens.
 - [The journal](#the-journal)
 - [Planned repository layout](#planned-repository-layout)
 - [Engineering conventions](#engineering-conventions)
+- [Using Bonsai today](#using-bonsai-today)
 - [Development](#development)
 - [Roadmap: the seasons ahead](#roadmap-the-seasons-ahead)
 - [Decisions log](#decisions-log)
@@ -276,16 +277,20 @@ Bonsai/
 ├── assets/              # Logo and images
 ├── configs/
 │   ├── pots/            # Pot profiles (TOML), one per machine
-│   └── seasons/         # One YAML file per season or experiment
+│   ├── seeds/           # Pinned, checksummed sources of seeds
+│   └── seasons/         # One file per season or experiment
 ├── prompts/             # Versioned prompt templates
 ├── src/bonsai/
 │   ├── cli.py           # The `bonsai` command
+│   ├── jobs.py          # Detached jobs in the pot, driven over SSH
+│   ├── bench.py         # Benchmark results against the ceiling
+│   ├── weights.py       # Bytes read per token, from a GGUF
 │   ├── journal.py       # SQLite lineage store
 │   ├── pot.py           # Pot profiles and the bytes-per-token ceiling
 │   ├── prune/           # Pruning operations (depth first)
 │   ├── repot.py         # GGUF conversion, quantisation, reference checks
 │   └── measure/         # Quality on the bench, speed and heat in the pot
-├── scripts/             # Setup helpers (e.g. building llama.cpp on the Pi)
+├── scripts/             # Setup and measuring scripts for the PC and the Pi
 ├── analysis/            # Notebooks and plotting scripts
 ├── results/             # Exported tables, figures and write-ups
 └── tests/
@@ -307,6 +312,39 @@ Bonsai/
 
 ---
 
+## Using Bonsai today
+
+Phase 1 is in progress. What works now is measuring trees in the pot and
+comparing them with its ceiling. Set `BONSAI_PI` to the Pi's `user@address`
+(SSH keys, no password prompts), then:
+
+```bash
+# Fetch off-the-shelf trees (pinned and checksummed) to ~/bonsai/seeds
+uv run python scripts/pc/fetch_gguf.py configs/seeds/qwen2.5-0.5b-instruct-gguf.toml
+
+# The ceiling for one tree in the pot
+uv run bonsai pot ceiling configs/pots/pi5-4gb.toml \
+    ~/bonsai/seeds/qwen2.5-0.5b-instruct/qwen2.5-0.5b-instruct-q4_0.gguf
+
+# Measure trees in the pot: uploads them and starts a detached job
+uv run bonsai job bench ~/bonsai/seeds/qwen2.5-0.5b-instruct/*q4_*.gguf
+
+uv run bonsai job status                  # running, succeeded or failed
+uv run bonsai job log <job-id>            # the end of its log
+uv run bonsai job collect <job-id> --clean  # fetch results, free the Pi
+
+# Compare the results with the ceiling
+uv run bonsai bench report configs/pots/pi5-4gb.toml \
+    results/jobs/<job-id>/results/*.jsonl --trees ~/bonsai/seeds/qwen2.5-0.5b-instruct
+```
+
+Jobs run in tmux on the Pi, so they carry on if the connection drops. Only one
+runs at a time, so measurements never compete. `bench` runs trees with the
+profile's threads and repacking setting. It refuses trees too big for the
+memory or storage budget, and it waits until the Pi has the memory budget free.
+
+---
+
 ## Development
 
 Requires [uv](https://docs.astral.sh/uv/).
@@ -315,10 +353,6 @@ Requires [uv](https://docs.astral.sh/uv/).
 uv sync                      # create the environment and install everything
 uv run pre-commit install    # run the checks on every commit
 uv run bonsai --version
-uv run bonsai pot show configs/pots/pi5-4gb.toml
-uv run bonsai pot ceiling configs/pots/pi5-4gb.toml path/to/tree.gguf
-uv run bonsai bench report configs/pots/pi5-4gb.toml \
-    results/trees/qwen2.5-0.5b-instruct/2026-11-16/bench.jsonl
 ```
 
 The same checks CI runs:
@@ -342,7 +376,8 @@ uv run pytest
 
 **Phase 1: Nursery** *(see above)*
 - [x] Pot profile
-- [ ] Measuring, journal
+- [x] Measuring in the pot: detached jobs and results against the ceiling
+- [ ] Journal
 - [ ] Off-the-shelf frontier (speed measured for Qwen2.5-0.5B; quality next)
 - [ ] Depth pruning, repotting and reference checks
 - [ ] First frontier plot and write-up
@@ -390,6 +425,8 @@ uv run pytest
 | Trees run without weight repacking on the Pi | Repacking costs 340–510 MB of memory and slightly slows generation; it only helps prompt speed. |
 | Trees run on three threads | Fastest in the thread sweep, and leaves a core for the other services. |
 | The `gguf` package reads GGUF files | It is llama.cpp's own reader, so tensor sizes match the runtime's. |
+| Jobs in the pot are driven over plain `ssh` and `scp` | Nothing to install on the Pi beyond tmux; every step is a command that can be run by hand. |
+| One job in the pot at a time | Two measurements at once would each slow the other. |
 | Read bandwidth at 4 threads sets the ceiling | It is what trees run with; the single-core figure is higher but not what inference sees. |
 | Everything into `main` via pull request | Keeps history reviewable. |
 
