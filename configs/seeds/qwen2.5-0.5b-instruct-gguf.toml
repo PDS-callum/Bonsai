@@ -1,0 +1,40 @@
+# Off-the-shelf GGUFs of Qwen2.5-0.5B-Instruct, published by Qwen.
+#
+# These are the first trees measured in the pot, and the start of the
+# off-the-shelf frontier. Files are pinned to one repository revision and
+# checked against their SHA-256 after download.
+
+name = "qwen2.5-0.5b-instruct"
+license = "apache-2.0"
+repo = "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
+revision = "9217f5db79a29953eb74d5343926648285ec7e67"
+
+[[files]]
+name = "qwen2.5-0.5b-instruct-q2_k.gguf"
+bytes = 415182688
+sha256 = "9ee36184e616dfc76df4f5dd66f908dbde6979524ae36e6cefb67f532f798cb8"
+
+[[files]]
+name = "qwen2.5-0.5b-instruct-q4_0.gguf"
+bytes = 428730208
+sha256 = "7671c0c304e6ce5a7fc577bcb12aba01e2c155cc2efd29b2213c95b18edaf6ed"
+
+[[files]]
+name = "qwen2.5-0.5b-instruct-q4_k_m.gguf"
+bytes = 491400032
+sha256 = "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db"
+
+[[files]]
+name = "qwen2.5-0.5b-instruct-q6_k.gguf"
+bytes = 650379104
+sha256 = "2f82233630c349ccf6b8daccf48f9a7865713d9f08a2eadfa456cebe9b97c7f5"
+
+[[files]]
+name = "qwen2.5-0.5b-instruct-q8_0.gguf"
+bytes = 675710816
+sha256 = "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e"
+
+[[files]]
+name = "qwen2.5-0.5b-instruct-fp16.gguf"
+bytes = 1266425696
+sha256 = "8e0ae26000627ed62de0e78e41860af70094558b9d2913385c842a6aa06cf3fc"
