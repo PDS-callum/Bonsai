@@ -1,6 +1,8 @@
-# Bonsai
+<h1 align="center">
+  <img src="assets/logo.png" alt="Bonsai" width="240">
+</h1>
 
-Small models, grown slowly on small hardware.
+<p align="center"><em>Small models, grown slowly on small hardware.</em></p>
 
 Bonsai is an ongoing research project into running small language models on
 CPU, mainly on a Raspberry Pi, with a PC for heavier lifting. The aim is to find
