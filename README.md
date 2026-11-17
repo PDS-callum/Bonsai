@@ -194,9 +194,17 @@ every later tree has to beat. No training yet.
 
 ### Measurements
 
-- **Quality:** perplexity on held-out text (fast, used to guide pruning), plus
-  task accuracy on fixed subsets of GSM8K (maths reasoning) and ARC (science
-  knowledge), with confidence intervals.
+- **Quality**, measured on the PC with the same pinned llama.cpp build
+  (`bonsai quality run`):
+  - *Perplexity* on the WikiText-2 test set: how well the tree predicts text.
+  - *KL divergence* from the seed at full precision, on the first 32 chunks of
+    the same text: how far each next-token prediction has moved. It resolves
+    small differences that perplexity averages away, which makes it the main
+    guide for pruning.
+  - *ARC* (Easy and Challenge, 1,172 questions): science knowledge, scored by
+    which answer the tree finds most probable, so no answer parsing is needed.
+  - *GSM8K* (a fixed 400-problem subset): maths the tree solves step by step,
+    with a 95% confidence interval.
 - **Speed:** prompt and generation tokens per second, time to first token,
   time per answer.
 - **Memory:** file size and peak RAM on the Pi.
@@ -278,6 +286,7 @@ Bonsai/
 ├── configs/
 │   ├── pots/            # Pot profiles (TOML), one per machine
 │   ├── seeds/           # Pinned, checksummed sources of seeds
+│   ├── data/            # Pinned, checksummed measuring data
 │   └── seasons/         # One file per season or experiment
 ├── prompts/             # Versioned prompt templates
 ├── src/bonsai/
@@ -285,6 +294,11 @@ Bonsai/
 │   ├── jobs.py          # Detached jobs in the pot, driven over SSH
 │   ├── bench.py         # Benchmark results against the ceiling
 │   ├── weights.py       # Bytes read per token, from a GGUF
+│   ├── fetch.py         # Pinned, checksummed downloads
+│   ├── quality.py       # Quality on the bench: perplexity, KLD, ARC, GSM8K
+│   ├── llama.py         # Running and reading llama.cpp's tools
+│   ├── server.py        # llama-server, for generated answers
+│   ├── gsm8k.py         # GSM8K problems, answers and intervals
 │   ├── journal.py       # SQLite lineage store
 │   ├── pot.py           # Pot profiles and the bytes-per-token ceiling
 │   ├── prune/           # Pruning operations (depth first)
@@ -314,9 +328,9 @@ Bonsai/
 
 ## Using Bonsai today
 
-Phase 1 is in progress. What works now is measuring trees in the pot and
-comparing them with its ceiling. Set `BONSAI_PI` to the Pi's `user@address`
-(SSH keys, no password prompts), then:
+Phase 1 is in progress. What works now is measuring trees: speed in the pot,
+against its ceiling, and quality on the bench. Set `BONSAI_PI` to the Pi's
+`user@address` (SSH keys, no password prompts), then:
 
 ```bash
 # Fetch off-the-shelf trees (pinned and checksummed) to ~/bonsai/seeds
@@ -336,6 +350,13 @@ uv run bonsai job collect <job-id> --clean  # fetch results, free the Pi
 # Compare the results with the ceiling
 uv run bonsai bench report configs/pots/pi5-4gb.toml \
     results/jobs/<job-id>/results/*.jsonl --trees ~/bonsai/seeds/qwen2.5-0.5b-instruct
+
+# Measure quality on the bench, against the seed at full precision
+uv run bonsai fetch configs/data/quality-v1.toml
+uv run bonsai quality run ~/bonsai/seeds/qwen2.5-0.5b-instruct/*.gguf \
+    --base ~/bonsai/seeds/qwen2.5-0.5b-instruct/qwen2.5-0.5b-instruct-fp16.gguf \
+    --out results/quality/qwen2.5-0.5b-instruct/<date>
+uv run bonsai quality report results/quality/qwen2.5-0.5b-instruct/<date>
 ```
 
 Jobs run in tmux on the Pi, so they carry on if the connection drops. Only one
@@ -378,7 +399,8 @@ uv run pytest
 - [x] Pot profile
 - [x] Measuring in the pot: detached jobs and results against the ceiling
 - [ ] Journal
-- [ ] Off-the-shelf frontier (speed measured for Qwen2.5-0.5B; quality next)
+- [x] Measuring on the bench: perplexity, KL divergence, ARC and GSM8K
+- [ ] Off-the-shelf frontier (Qwen2.5-0.5B measured; a second family next)
 - [ ] Depth pruning, repotting and reference checks
 - [ ] First frontier plot and write-up
 
@@ -427,6 +449,10 @@ uv run pytest
 | The `gguf` package reads GGUF files | It is llama.cpp's own reader, so tensor sizes match the runtime's. |
 | Jobs in the pot are driven over plain `ssh` and `scp` | Nothing to install on the Pi beyond tmux; every step is a command that can be run by hand. |
 | One job in the pot at a time | Two measurements at once would each slow the other. |
+| Quality is measured with llama.cpp's own tools and the pinned build | Scores and speeds then describe the same code and the same GGUF files. |
+| KL divergence from the full-precision seed as the main quality guide | It needs far fewer tokens than accuracy to tell close trees apart. |
+| A fixed 400-problem GSM8K subset | The full set takes half an hour per tree; 400 gives intervals of about ±4.5 points, and the same problems every time. |
+| Measuring data from plain-text sources, not Parquet | Readable with the standard library, so no heavy dependency just to load questions. |
 | Read bandwidth at 4 threads sets the ceiling | It is what trees run with; the single-core figure is higher but not what inference sees. |
 | Everything into `main` via pull request | Keeps history reviewable. |
 
