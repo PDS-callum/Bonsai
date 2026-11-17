@@ -573,6 +573,47 @@ is prompt speed, a third of what it was for Q4_0. Q4_0 is now the reference
 tree for this pot: the fastest generation, the smallest memory and the fastest
 prompts of the 4-bit trees.
 
+**Quality on the bench** (2026-11-17, raw data, tool logs and every GSM8K reply
+in
+[`results/quality/qwen2.5-0.5b-instruct/2026-11-17`](results/quality/qwen2.5-0.5b-instruct/2026-11-17)).
+KL divergence and the same-top-token rate compare each tree with F16. ARC is
+± one standard error; GSM8K shows its 95% interval.
+
+| Quantisation | File | Perplexity | KL divergence | Same top token | ARC | GSM8K |
+|---|---|---|---|---|---|---|
+| Q2_K | 415 MB | 17.71 ± 0.14 | 0.1266 | 81.7% | 46.3% ± 1.7 | 30.2% (26.0–34.9%) |
+| Q4_0 | 429 MB | 17.50 ± 0.14 | 0.1169 | 82.6% | 48.8% ± 1.7 | 29.0% (24.8–33.6%) |
+| Q4_K_M | 491 MB | 16.36 ± 0.13 | 0.0319 | 91.0% | 47.5% ± 1.7 | 41.5% (36.8–46.4%) |
+| Q6_K | 650 MB | 15.84 ± 0.12 | 0.0035 | 96.8% | 50.7% ± 1.7 | 43.8% (39.0–48.6%) |
+| Q8_0 | 676 MB | 15.82 ± 0.12 | 0.0021 | 97.6% | 51.7% ± 1.7 | 42.5% (37.7–47.4%) |
+| F16 | 1266 MB | 15.73 ± 0.12 | – | – | 50.9% ± 1.7 | 44.2% (39.5–49.1%) |
+
+What they show:
+
+- **Quantisation costs quality in steps.** Q2_K and Q4_0 move far from the seed:
+  perplexity is 11–13% higher and the top token changes at almost one position
+  in five. Q4_K_M moves a quarter as far, and Q6_K and Q8_0 are close to
+  lossless.
+- **Reasoning breaks before knowledge.** On GSM8K, Q2_K and Q4_0 lose about 14
+  points, and their intervals do not overlap with F16's. On ARC every tree is
+  within about two standard errors of F16. Answering a multiple-choice question
+  takes one prediction, but solving a problem step by step takes hundreds, and
+  small errors compound. Q4_0 also wanders: 62 of its 400 replies ran out of
+  tokens before an answer, against 16 for F16.
+- **KL divergence agrees with the tasks.** KL divergence orders the trees the
+  same way as GSM8K, and it took 32 chunks of text, not 400 generated solutions.
+  That supports using it to guide pruning.
+- **The pot's reference tree is too lossy.** Q4_K_M generates 12% slower than
+  Q4_0 in the pot (29.9 against 34.0 t/s) and peaks 64 MB higher. In return it
+  keeps almost all of F16's maths: 41.5% against 29.0%. Q4_0 is still the
+  fastest tree, but Q4_K_M is the better one unless speed is all that matters. Q6_K and Q8_0
+  add little quality over Q4_K_M for 28–34% more bytes per token.
+- **The seed ignores the requested answer format.** F16 boxed its final answer
+  (`\boxed{}`) in 351 of 400 replies, despite being asked for "The answer is:".
+  The scorer accepts either, so formatting is not scored. Replies whose answer
+  came from the last number rather than a stated answer were almost always
+  wrong.
+
 ---
 
 ## License
