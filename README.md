@@ -320,7 +320,7 @@ comparing them with its ceiling. Set `BONSAI_PI` to the Pi's `user@address`
 
 ```bash
 # Fetch off-the-shelf trees (pinned and checksummed) to ~/bonsai/seeds
-uv run python scripts/pc/fetch_gguf.py configs/seeds/qwen2.5-0.5b-instruct-gguf.toml
+uv run bonsai fetch configs/seeds/qwen2.5-0.5b-instruct-gguf.toml
 
 # The ceiling for one tree in the pot
 uv run bonsai pot ceiling configs/pots/pi5-4gb.toml \
