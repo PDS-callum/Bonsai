@@ -10,6 +10,7 @@ from bonsai.bench import BenchError, format_report, load_runs
 from bonsai.fetch import FetchError, destination, fetch, load_manifest
 from bonsai.job_cli import job_app
 from bonsai.pot import GIB, Pot, PotError, load_pot
+from bonsai.quality_cli import quality_app
 from bonsai.weights import weight_bytes
 
 app = typer.Typer(
@@ -23,6 +24,7 @@ app.add_typer(pot_app, name="pot")
 bench_app = typer.Typer(help="Read benchmark results from the pot.")
 app.add_typer(bench_app, name="bench")
 app.add_typer(job_app, name="job")
+app.add_typer(quality_app, name="quality")
 
 PotFile = Annotated[
     Path,
