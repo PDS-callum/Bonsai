@@ -1,0 +1,34 @@
+{
+  "tree": "qwen2.5-0.5b-instruct-fp16.gguf",
+  "bytes": 1266425696,
+  "sha256": "8e0ae26000627ed62de0e78e41860af70094558b9d2913385c842a6aa06cf3fc",
+  "measured_at": "2026-11-17T21:46:15Z",
+  "llama_cpp": "b12359",
+  "data": "quality-v1",
+  "perplexity": {
+    "value": 15.7259,
+    "stderr": 0.11955,
+    "context": 512
+  },
+  "kl_divergence": null,
+  "arc": {
+    "accuracy_pct": 50.8631,
+    "stderr_pct": 1.6969
+  },
+  "gsm8k": {
+    "size": 400,
+    "seed": 0,
+    "correct": 177,
+    "accuracy": 0.4425,
+    "ci95": [
+      0.3946010465039066,
+      0.49149290716505667
+    ],
+    "answer_rules": {
+      "boxed": 351,
+      "answer-is": 30,
+      "last-number": 19
+    },
+    "mean_tokens": 302.7825
+  }
+}
