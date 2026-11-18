@@ -255,10 +255,32 @@ expert pruning, a custom inference engine, and growing models upward.
 
 ## The journal
 
-Every tree is a record. A first sketch:
+Every tree is recorded with where it came from and how it measured. The records
+themselves are committed: seed manifests in `configs/seeds`, and planting and
+pruning records, quality results and the pot's benchmark output under
+`results/`. `bonsai journal build` gathers them into one SQLite database
+(`~/bonsai/journal.sqlite`), which can be rebuilt from scratch at any time.
 
-| Field | Example |
+| Table | Holds |
 |---|---|
+| `seeds` | Each seed: fetched GGUFs or original weights, with its licence and manifest. A pruned seed records its parent and the layers removed. |
+| `trees` | Each GGUF, by SHA-256: its seed, its parent (the full-precision tree it was quantised from), and the operation that made it (`fetch`, `convert` or `quantize`). |
+| `measurements` | Each quality score or speed, with its error or interval, the threads and repacking it ran with, and the record it came from. |
+
+Following parents from any tree leads back to an original seed:
+
+```text
+$ uv run bonsai journal lineage smollm2-360m-instruct-q4_k_m.gguf
+smollm2-360m-instruct-q4_k_m.gguf  (e365f43c7228)  quantised to Q4_K_M
+  <- smollm2-360m-instruct-bf16.gguf  (d8734d60c2fc)  converted to BF16
+    <- seed smollm2-360m-instruct  (weights, configs/seeds/smollm2-360m-instruct.toml)
+```
+
+Large files (weights and GGUFs) live outside git; the journal stores their
+checksums so results can be reproduced. Benchmarks in the pot record the
+checksum of every tree they measure; older ones are matched by file name.
+
+---|---|
 | `id` | `qwen2.5-0.5b/p2-l3` |
 | `parent` | `qwen2.5-0.5b` |
 | `operation` | `prune.depth` with `{layers: [17, 18, 20]}` |
@@ -300,7 +322,7 @@ Bonsai/
 │   ├── llama.py         # Running and reading llama.cpp's tools
 │   ├── server.py        # llama-server, for generated answers
 │   ├── gsm8k.py         # GSM8K problems, answers and intervals
-│   ├── journal.py       # SQLite lineage store
+│   ├── journal.py       # The journal: lineage and measurements in SQLite
 │   ├── pot.py           # Pot profiles and the bytes-per-token ceiling
 │   ├── prune/           # Pruning operations (depth first)
 │   ├── repot.py         # GGUF conversion, quantisation, reference checks
@@ -363,6 +385,12 @@ uv run bonsai quality run ~/bonsai/seeds/qwen2.5-0.5b-instruct/*.gguf \
     --base ~/bonsai/seeds/qwen2.5-0.5b-instruct/qwen2.5-0.5b-instruct-fp16.gguf \
     --out results/quality/qwen2.5-0.5b-instruct/<date>
 uv run bonsai quality report results/quality/qwen2.5-0.5b-instruct/<date>
+
+# Gather every record into the journal, then query it
+uv run bonsai journal build
+uv run bonsai journal trees               # every tree and its measurements
+uv run bonsai journal lineage <tree>      # back to its original seed
+uv run bonsai journal frontier            # quality against speed in the pot
 ```
 
 Jobs run in tmux on the Pi, so they carry on if the connection drops. Only one
@@ -404,7 +432,7 @@ uv run pytest
 **Phase 1: Nursery** *(see above)*
 - [x] Pot profile
 - [x] Measuring in the pot: detached jobs and results against the ceiling
-- [ ] Journal
+- [x] Journal
 - [x] Measuring on the bench: perplexity, KL divergence, ARC and GSM8K
 - [x] Planting trees from a seed's original weights
 - [x] Off-the-shelf frontier: Qwen2.5-0.5B and SmolLM2-360M
@@ -446,6 +474,7 @@ uv run pytest
 | Depth pruning first | Cheap, well studied, and keeps models GGUF-compatible. |
 | No training in Phase 1 | Training needs a GPU decision; pruning alone establishes the loop and the gap healing must close. |
 | SQLite for the journal | One file, easy to query, no server. |
+| The journal is rebuilt from committed records | The records in git stay the single source of truth, and the database can never drift from them or need migrating. |
 | uv, ruff and strict mypy | Fast, reproducible environments from a lock file; one tool for linting and formatting; types checked everywhere. |
 | Typer for the CLI | Commands defined from type hints, with little boilerplate. |
 | Pot profiles in TOML | Read by Python's standard library, with comments to explain each budget. |

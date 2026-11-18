@@ -105,7 +105,7 @@ def save_base_logits(
 
 def _run_logged(runner: ToolRunner, command: list[str], log: Path) -> str:
     output = runner(command)
-    log.write_text(output, encoding="utf-8")
+    log.write_text(output, encoding="utf-8", newline="\n")
     return output
 
 
@@ -265,7 +265,7 @@ def measure(
         "gsm8k": maths,
     }
     (target / "quality.json").write_text(
-        json.dumps(results, indent=2) + "\n", encoding="utf-8"
+        json.dumps(results, indent=2) + "\n", encoding="utf-8", newline="\n"
     )
     return results
 

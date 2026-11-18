@@ -86,7 +86,7 @@ def _make(
     """Run ``command(part)`` and move the finished part to ``out``."""
     part = out.with_name(out.name + ".part")
     part.unlink(missing_ok=True)
-    log.write_text(runner(command(part)), encoding="utf-8")
+    log.write_text(runner(command(part)), encoding="utf-8", newline="\n")
     if not part.is_file():
         msg = f"{out.name} was not written (see {log})"
         raise PlantError(msg)
@@ -154,6 +154,6 @@ def plant(
         ],
     }
     (out_dir / "planting.json").write_text(
-        json.dumps(record, indent=2) + "\n", encoding="utf-8"
+        json.dumps(record, indent=2) + "\n", encoding="utf-8", newline="\n"
     )
     return record

@@ -1,0 +1,61 @@
+{
+  "machine": {
+    "model": "Raspberry Pi 5 Model B Rev 1.1",
+    "kernel": "6.12.62+rpt-rpi-2712",
+    "os": "Debian GNU/Linux 13 (trixie)"
+  },
+  "cpu": {
+    "model": "Cortex-A76",
+    "cores": 4,
+    "features": [
+      "fp",
+      "asimd",
+      "evtstrm",
+      "aes",
+      "pmull",
+      "sha1",
+      "sha2",
+      "crc32",
+      "atomics",
+      "fphp",
+      "asimdhp",
+      "cpuid",
+      "asimdrdm",
+      "lrcpc",
+      "dcpop",
+      "asimddp"
+    ],
+    "min_khz": 1500000,
+    "max_khz": 2400000,
+    "governor": "ondemand",
+    "caches": {
+      "L1d": "256 KiB (4 instances)",
+      "L1i": "256 KiB (4 instances)",
+      "L2": "2 MiB (4 instances)",
+      "L3": "2 MiB (1 instance)"
+    }
+  },
+  "memory": {
+    "total_bytes": 4246405120,
+    "available_bytes": 3197468672,
+    "swap_total_bytes": 2147467264,
+    "swap_free_bytes": 1053753344,
+    "mlock_limit_bytes": 8388608
+  },
+  "storage": {
+    "path": "/home/callum/bonsai",
+    "total_bytes": 30593998848,
+    "free_bytes": 8268111872
+  },
+  "thermal": {
+    "temp_c": 52.35,
+    "arm_clock_hz": 1500016128,
+    "throttled": "0x0",
+    "fan_rpm": 2145
+  },
+  "load": {
+    "1m": 1.8544921875,
+    "5m": 1.83740234375,
+    "15m": 1.00439453125
+  }
+}

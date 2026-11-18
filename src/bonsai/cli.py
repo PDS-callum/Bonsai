@@ -1,5 +1,6 @@
 """The ``bonsai`` command-line interface."""
 
+import json
 from pathlib import Path
 from typing import Annotated
 
@@ -9,6 +10,7 @@ from bonsai import __version__
 from bonsai.bench import BenchError, format_report, load_runs
 from bonsai.fetch import FetchError, bonsai_home, destination, fetch, load_manifest
 from bonsai.job_cli import job_app
+from bonsai.journal_cli import journal_app
 from bonsai.llama import LlamaError, default_bin_dir
 from bonsai.plant import DEFAULT_TYPES, Pin, PlantError, plant
 from bonsai.pot import GIB, Pot, PotError, load_pot
@@ -27,6 +29,7 @@ bench_app = typer.Typer(help="Read benchmark results from the pot.")
 app.add_typer(bench_app, name="bench")
 app.add_typer(job_app, name="job")
 app.add_typer(quality_app, name="quality")
+app.add_typer(journal_app, name="journal")
 
 PotFile = Annotated[
     Path,
@@ -193,15 +196,23 @@ def plant_command(
         Path | None,
         typer.Option(help="Where to write the trees. Default: ~/bonsai/trees/<seed>."),
     ] = None,
+    record: Annotated[
+        Path,
+        typer.Option(
+            help="Where to keep a copy of the planting record, for the journal: "
+            "<record>/<seed>/<date>/planting.json."
+        ),
+    ] = Path("results/plantings"),
 ) -> None:
     """Plant GGUF trees from a seed's original weights, with the pinned llama.cpp."""
+    record_dir = record
     try:
         loaded = load_manifest(manifest)
         if loaded.kind != "seeds":
             msg = f"{manifest} is a {loaded.kind} manifest, not a seed"
             raise PlantError(msg)
         out_dir = out or bonsai_home() / "trees" / loaded.name
-        record = plant(
+        planted = plant(
             destination(loaded),
             out_dir,
             loaded.name,
@@ -215,4 +226,9 @@ def plant_command(
     except (FetchError, LlamaError, PlantError) as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error
-    typer.echo(f"{len(record['trees'])} trees in {out_dir}")
+    kept = record_dir / planted["seed"] / planted["planted_at"][:10] / "planting.json"
+    kept.parent.mkdir(parents=True, exist_ok=True)
+    kept.write_text(
+        json.dumps(planted, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
+    typer.echo(f"{len(planted['trees'])} trees in {out_dir}; record in {kept}")
