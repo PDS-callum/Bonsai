@@ -245,7 +245,7 @@ expert pruning, a custom inference engine, and growing models upward.
 ### Done when
 
 - [x] A pot profile for the Pi exists
-- [ ] The off-the-shelf frontier is measured for at least two seed families
+- [x] The off-the-shelf frontier is measured for at least two seed families
 - [ ] At least one seed has been depth-pruned at several cut sizes, repotted,
       checked and measured
 - [ ] Every tree in the plot can be traced through the journal to its seed
@@ -406,7 +406,8 @@ uv run pytest
 - [x] Measuring in the pot: detached jobs and results against the ceiling
 - [ ] Journal
 - [x] Measuring on the bench: perplexity, KL divergence, ARC and GSM8K
-- [ ] Off-the-shelf frontier (Qwen2.5-0.5B measured; a second family next)
+- [x] Planting trees from a seed's original weights
+- [x] Off-the-shelf frontier: Qwen2.5-0.5B and SmolLM2-360M
 - [ ] Depth pruning, repotting and reference checks
 - [ ] First frontier plot and write-up
 
@@ -461,6 +462,7 @@ uv run pytest
 | Trees are planted by Bonsai when a seed has no full set of GGUFs | The pinned converter and quantiser make every tree reproducible to the byte, with the same quantisation recipe across families. |
 | Quantisation without an importance matrix | It matches the off-the-shelf trees it is compared with, and keeps planting deterministic. Importance matrices can be a later operation. |
 | Seeds trained in bf16 are converted to BF16 first | It is lossless, so KL divergence is measured from the seed itself rather than from an F16 rounding of it. |
+| Across families, compare task scores, not perplexity | Perplexity is per token, and families split text into different tokens. KL divergence and perplexity compare trees within a family. |
 | Measuring data from plain-text sources, not Parquet | Readable with the standard library, so no heavy dependency just to load questions. |
 | Read bandwidth at 4 threads sets the ceiling | It is what trees run with; the single-core figure is higher but not what inference sees. |
 | Everything into `main` via pull request | Keeps history reviewable. |
@@ -480,6 +482,9 @@ uv run pytest
   this pot despite being the smallest.
 - Does the best thread count differ by tree size or quantisation? The sweep so
   far covers one tree.
+- How much quality does a larger family member buy at the same speed? Llama
+  3.2 1B and SmolLM2-1.7B are next, though at Q4 they come close to the
+  memory budget.
 - Is it worth raising the memory-lock limit so trees can be pinned with
   `--mlock`, given swap is already in use?
 
@@ -622,6 +627,59 @@ What they show:
   The scorer accepts either, so formatting is not scored. Replies whose answer
   came from the last number rather than a stated answer were almost always
   wrong.
+
+**A second family: SmolLM2-360M-Instruct** (2026-11-18). Hugging Face publishes
+only a Q8_0 GGUF of it, so these trees were planted from the original weights
+with `bonsai plant`, using the same quantisation types and no importance
+matrix, like Qwen's. Speed is in the pot with its settings (3 threads, no
+repacking); quality is on the bench, with KL divergence measured from BF16. Raw
+data:
+[speed](results/jobs/bench-smollm2-360m-20261118T090413Z),
+[quality](results/quality/smollm2-360m-instruct/2026-11-18).
+
+| Quantisation | File | Generation | Of ceiling | Peak memory | Perplexity | KL divergence | ARC | GSM8K |
+|---|---|---|---|---|---|---|---|---|
+| Q2_K | 219 MB | 48.8 t/s | 85% | 263 MB | 16.38 ± 0.12 | 0.2213 | 45.0% ± 1.7 | 1.5% (0.7–3.2%) |
+| Q4_0 | 229 MB | 49.4 t/s | 91% | 273 MB | 15.36 ± 0.11 | 0.1507 | 43.7% ± 1.7 | 2.5% (1.4–4.5%) |
+| Q4_K_M | 271 MB | 41.5 t/s | 90% | 313 MB | 13.95 ± 0.10 | 0.0337 | 40.2% ± 1.7 | 5.8% (3.9–8.5%) |
+| Q6_K | 367 MB | 31.9 t/s | 94% | 411 MB | 13.65 ± 0.10 | 0.0074 | 40.6% ± 1.7 | 8.0% (5.7–11.1%) |
+| Q8_0 | 386 MB | 31.3 t/s | 97% | 430 MB | 13.60 ± 0.10 | 0.0030 | 42.1% ± 1.7 | 8.0% (5.7–11.1%) |
+| BF16 | 726 MB | 3.9 t/s | 23% | 770 MB | 13.57 ± 0.10 | – | 41.7% ± 1.7 | 7.8% (5.5–10.8%) |
+
+What they show:
+
+- **SmolLM2 is fast and light.** Its Q4_0 generates at 49.4 t/s, 45% faster
+  than Qwen's Q4_0 in the same pot, at about half the peak memory. That is
+  despite its tied embeddings: the output layer reuses the embedding table, so
+  every byte of the file is read for each token.
+- **It is much weaker, at maths above all.** At full precision it solves 7.8% of
+  the GSM8K problems against Qwen's 44.2%, and scores 41.7% on ARC against
+  50.9%. Its lower perplexity does not mean the opposite: the two families
+  split text into different tokens, so their perplexities measure different
+  things. Across families, only the task scores compare.
+- **Quantisation costs it in the same steps as Qwen.** Q2_K and Q4_0 move
+  furthest from the seed, and their maths collapses: 264 of Q2_K's 400 replies
+  ran out of tokens, mostly by repeating themselves. Q4_K_M and above are close
+  to the seed. ARC again barely separates the trees.
+- **K-quants fall back on this shape.** SmolLM2's hidden size, 960, is not a
+  multiple of the 256-weight blocks K-quants use, so `llama-quantize` stores
+  192 of Q4_K_M's 290 tensors as Q5_0 or Q8_0 instead. Its KL divergence still
+  matches Qwen's Q4_K_M.
+- **The Pi cannot run BF16 well.** Its cores have no bf16 arithmetic, so the
+  BF16 tree is limited by calculation, not memory, and reaches only 23% of its
+  ceiling. Full precision on this pot means F16.
+- **Long generations cost a small model more.** Q4_0 fell from 49.4 t/s over
+  128 tokens to 36.1 over 1,024, as attention over the growing context is a
+  larger share of each token's work. Three threads were again fastest (22.6,
+  38.5, 49.3 and 47.6 t/s on 1–4). The temperature peaked at 76 °C without
+  throttling, and the other services lost nothing to swap.
+
+**The frontier so far.** At about 30 t/s, Qwen's Q4_K_M (29.9 t/s, 41.5% GSM8K,
+47.5% ARC) beats SmolLM2's Q8_0 (31.3 t/s, 8.0%, 42.1%) on every measure.
+SmolLM2 holds the frontier only above Qwen's fastest tree (34.0 t/s), where its
+Q4_K_M runs at 41.5 t/s. That gap sets the first target for pruning: a pruned
+Qwen tree that runs faster than 34 t/s and keeps more than SmolLM2's quality
+moves the frontier.
 
 ---
 
