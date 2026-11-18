@@ -1,0 +1,33 @@
+{
+  "tree": "smollm2-360m-instruct-bf16.gguf",
+  "bytes": 725553760,
+  "sha256": "d8734d60c2fc5e31c4d38901348606d697c39e023fd8b30b53f42b79f36e01e5",
+  "measured_at": "2026-11-18T10:13:03Z",
+  "llama_cpp": "b12359",
+  "data": "quality-v1",
+  "perplexity": {
+    "value": 13.5693,
+    "stderr": 0.10024,
+    "context": 512
+  },
+  "kl_divergence": null,
+  "arc": {
+    "accuracy_pct": 41.6571,
+    "stderr_pct": 1.6733
+  },
+  "gsm8k": {
+    "size": 400,
+    "seed": 0,
+    "correct": 31,
+    "accuracy": 0.0775,
+    "ci95": [
+      0.05513258958646752,
+      0.10790559172026265
+    ],
+    "answer_rules": {
+      "answer-is": 355,
+      "last-number": 45
+    },
+    "mean_tokens": 245.8
+  }
+}

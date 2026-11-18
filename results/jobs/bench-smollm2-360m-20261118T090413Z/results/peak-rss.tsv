@@ -1,0 +1,6 @@
+smollm2-360m-instruct-bf16.gguf	769703936
+smollm2-360m-instruct-q2_k.gguf	262881280
+smollm2-360m-instruct-q4_0.gguf	272777216
+smollm2-360m-instruct-q4_k_m.gguf	313229312
+smollm2-360m-instruct-q6_k.gguf	411025408
+smollm2-360m-instruct-q8_0.gguf	430063616
