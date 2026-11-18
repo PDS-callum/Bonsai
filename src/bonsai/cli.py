@@ -14,6 +14,7 @@ from bonsai.journal_cli import journal_app
 from bonsai.llama import LlamaError, default_bin_dir
 from bonsai.plant import DEFAULT_TYPES, Pin, PlantError, plant
 from bonsai.pot import GIB, Pot, PotError, load_pot
+from bonsai.prune_cli import check_command, prune_app
 from bonsai.quality_cli import quality_app
 from bonsai.weights import weight_bytes
 
@@ -30,6 +31,8 @@ app.add_typer(bench_app, name="bench")
 app.add_typer(job_app, name="job")
 app.add_typer(quality_app, name="quality")
 app.add_typer(journal_app, name="journal")
+app.add_typer(prune_app, name="prune")
+app.command("check")(check_command)
 
 PotFile = Annotated[
     Path,
@@ -176,12 +179,12 @@ def fetch_command(
 
 @app.command("plant")
 def plant_command(
-    manifest: Annotated[
+    seed: Annotated[
         Path,
         typer.Argument(
-            help="The seed's manifest, e.g. configs/seeds/smollm2-360m-instruct.toml.",
+            help="The seed's manifest (e.g. configs/seeds/smollm2-360m-instruct.toml), "
+            "or a directory of weights such as a pruned seed.",
             exists=True,
-            dir_okay=False,
         ),
     ],
     types: Annotated[
@@ -207,15 +210,19 @@ def plant_command(
     """Plant GGUF trees from a seed's original weights, with the pinned llama.cpp."""
     record_dir = record
     try:
-        loaded = load_manifest(manifest)
-        if loaded.kind != "seeds":
-            msg = f"{manifest} is a {loaded.kind} manifest, not a seed"
-            raise PlantError(msg)
-        out_dir = out or bonsai_home() / "trees" / loaded.name
+        if seed.is_dir():
+            seed_dir, name = seed, seed.name
+        else:
+            loaded = load_manifest(seed)
+            if loaded.kind != "seeds":
+                msg = f"{seed} is a {loaded.kind} manifest, not a seed"
+                raise PlantError(msg)
+            seed_dir, name = destination(loaded), loaded.name
+        out_dir = out or bonsai_home() / "trees" / name
         planted = plant(
-            destination(loaded),
+            seed_dir,
             out_dir,
-            loaded.name,
+            name,
             source=bonsai_home() / "llama.cpp",
             bin_dir=default_bin_dir(),
             pin=Pin.load(Path("configs/llama-cpp.env")),

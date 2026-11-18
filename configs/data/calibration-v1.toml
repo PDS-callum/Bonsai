@@ -1,0 +1,11 @@
+# Text for choosing which layers to prune: the WikiText-2 training split, kept
+# apart from the test split that perplexity and KL divergence are measured on.
+name = "calibration-v1"
+kind = "data"
+license = "WikiText: CC BY-SA 3.0"
+base_url = "https://huggingface.co/datasets/ikawrakow/validation-datasets-for-llama.cpp/resolve/37884b81b4957f1950a53b6ff48d77c8dd5e430c"
+
+[[files]]
+name = "wiki.train.raw.gz"
+sha256 = "7eb0dd6ffd24a93e814fb7969caee9cc5f93b5e448d9483684aadd0fa2d27ae9"
+gunzip = true

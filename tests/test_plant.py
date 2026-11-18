@@ -216,6 +216,26 @@ def test_cli_plant(
     assert json.loads(kept.read_text(encoding="utf-8"))["seed"] == "smol"
 
 
+def test_cli_plant_from_a_directory(
+    tmp_path: Path, setup: tuple[Path, Path, Path], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seed, source, bin_dir = setup
+    home = tmp_path / "home"
+    home.mkdir()
+    source.rename(home / "llama.cpp")
+    monkeypatch.setenv("BONSAI_HOME", str(home))
+    monkeypatch.setattr(cli, "default_bin_dir", lambda: bin_dir)
+    monkeypatch.setattr(cli, "plant", partial(plant, runner=FakeTools()))
+
+    result = runner.invoke(
+        app,
+        ["plant", str(seed), "--types", "q4_0", "--record", str(tmp_path / "r")],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (home / "trees" / "seed" / "seed-q4_0.gguf").is_file()
+
+
 def test_cli_plant_rejects_data_manifests(tmp_path: Path) -> None:
     result = runner.invoke(app, ["plant", str(seed_manifest(tmp_path, kind="data"))])
 
