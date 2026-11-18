@@ -1,0 +1,47 @@
+{
+  "seed": "smollm2-360m-instruct",
+  "planted_at": "2026-11-18T09:03:31Z",
+  "llama_cpp": {
+    "commit": "b1b770d90d94cad9e9ea5b993bdbc383a522fb28",
+    "build": "b12359"
+  },
+  "base": "smollm2-360m-instruct-bf16.gguf",
+  "trees": [
+    {
+      "file": "smollm2-360m-instruct-bf16.gguf",
+      "type": "bf16",
+      "bytes": 725553760,
+      "sha256": "d8734d60c2fc5e31c4d38901348606d697c39e023fd8b30b53f42b79f36e01e5"
+    },
+    {
+      "file": "smollm2-360m-instruct-q2_k.gguf",
+      "type": "q2_k",
+      "bytes": 218673760,
+      "sha256": "346db6190e2f3f4c4f4fb50e263158c1d5170653e48b145b91332736fce39735"
+    },
+    {
+      "file": "smollm2-360m-instruct-q4_0.gguf",
+      "type": "q4_0",
+      "bytes": 229118560,
+      "sha256": "074c0d4e8274100495c70e8d26aa3d94cbacc8257aeaa9009e0b044a13399edb"
+    },
+    {
+      "file": "smollm2-360m-instruct-q4_k_m.gguf",
+      "type": "q4_k_m",
+      "bytes": 270590560,
+      "sha256": "e365f43c7228d16c30c84df5aafb1e2a986af3243c72e9c82b059fa6f2472b7d"
+    },
+    {
+      "file": "smollm2-360m-instruct-q6_k.gguf",
+      "type": "q6_k",
+      "bytes": 367358560,
+      "sha256": "771de70c7431c5ab2d7349a139aa6c08bfc4d4bc7ad211702e7469e4981088f3"
+    },
+    {
+      "file": "smollm2-360m-instruct-q8_0.gguf",
+      "type": "q8_0",
+      "bytes": 386404960,
+      "sha256": "3afd4eea8ceafef1ed3b1b4407b1ec11ba75eaaed172f53697e98b246adca46e"
+    }
+  ]
+}

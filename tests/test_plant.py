@@ -201,13 +201,19 @@ def test_cli_plant(
     monkeypatch.setattr(cli, "default_bin_dir", lambda: bin_dir)
     monkeypatch.setattr(cli, "plant", partial(plant, runner=FakeTools()))
 
+    records = tmp_path / "records"
+
     result = runner.invoke(
-        app, ["plant", str(seed_manifest(tmp_path)), "--types", "Q4_0"]
-    )
+        app,
+        ["plant", str(seed_manifest(tmp_path)), "--types", "Q4_0",
+         "--record", str(records)],
+    )  # fmt: skip
 
     assert result.exit_code == 0, result.output
     assert "2 trees in" in plain(result.output)
     assert (home / "trees" / "smol" / "smol-q4_0.gguf").is_file()
+    (kept,) = records.glob("smol/*/planting.json")
+    assert json.loads(kept.read_text(encoding="utf-8"))["seed"] == "smol"
 
 
 def test_cli_plant_rejects_data_manifests(tmp_path: Path) -> None:
