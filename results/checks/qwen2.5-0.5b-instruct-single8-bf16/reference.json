@@ -1,0 +1,483 @@
+{
+ "model": "C:\\Users\\callu\\bonsai\\seeds\\qwen2.5-0.5b-instruct-single8",
+ "tokens": 16,
+ "versions": {
+  "torch": "2.11.0+cpu",
+  "transformers": "4.57.6"
+ },
+ "answers": [
+  {
+   "prompt": "The capital of France is",
+   "prompt_ids": [
+    785,
+    6722,
+    315,
+    9625,
+    374
+   ],
+   "continuation_ids": [
+    60694,
+    304,
+    279,
+    67299,
+    967,
+    329,
+    1543,
+    13,
+    53090,
+    748,
+    60694,
+    304,
+    279,
+    1852,
+    943,
+    315
+   ],
+   "continuation": " bells in the breeyleadines. Diane\u2019s bells in the same type of",
+   "first_top": [
+    [
+     60694,
+     -3.1208
+    ],
+    [
+     34409,
+     -3.6242
+    ],
+    [
+     87508,
+     -3.8474
+    ],
+    [
+     264,
+     -3.9122
+    ],
+    [
+     38306,
+     -3.9736
+    ]
+   ]
+  },
+  {
+   "prompt": "def fibonacci(n):\n    \"\"\"Return the nth Fibonacci number.\"\"\"\n",
+   "prompt_ids": [
+    750,
+    75698,
+    1445,
+    982,
+    262,
+    4210,
+    5598,
+    279,
+    55129,
+    79683,
+    1372,
+    14442
+   ],
+   "continuation_ids": [
+    262,
+    421,
+    320,
+    77,
+    284,
+    4149,
+    7829,
+    320,
+    8815,
+    20785,
+    320,
+    45,
+    595,
+    2261,
+    320,
+    45
+   ],
+   "continuation": "    if (n = Math.random (Math odds (N kln (N",
+   "first_top": [
+    [
+     262,
+     -0.1026
+    ],
+    [
+     220,
+     -2.825
+    ],
+    [
+     1066,
+     -5.0012
+    ],
+    [
+     257,
+     -5.4055
+    ],
+    [
+     1789,
+     -5.8033
+    ]
+   ]
+  },
+  {
+   "prompt": "Water boils at 100 degrees Celsius at sea level, but on a high mountain",
+   "prompt_ids": [
+    28253,
+    88955,
+    518,
+    220,
+    16,
+    15,
+    15,
+    12348,
+    61347,
+    518,
+    9396,
+    2188,
+    11,
+    714,
+    389,
+    264,
+    1550,
+    16301
+   ],
+   "continuation_ids": [
+    7262,
+    7262,
+    31393,
+    2061,
+    44375,
+    3619,
+    4644,
+    372,
+    31393,
+    32507,
+    372,
+    372,
+    372,
+    372,
+    372,
+    372
+   ],
+   "continuation": " pressure pressureobarmed atmospheric baroeumobarrahumumumumumum",
+   "first_top": [
+    [
+     7262,
+     -1.8225
+    ],
+    [
+     39750,
+     -2.2865
+    ],
+    [
+     16566,
+     -3.2956
+    ],
+    [
+     88461,
+     -3.7292
+    ],
+    [
+     4682,
+     -4.0472
+    ]
+   ]
+  },
+  {
+   "prompt": "Photosynthesis is the process by which plants",
+   "prompt_ids": [
+    31772,
+    73667,
+    374,
+    279,
+    1882,
+    553,
+    892,
+    10779
+   ],
+   "continuation_ids": [
+    1486,
+    7565,
+    24982,
+    2272,
+    7586,
+    13,
+    63050,
+    4785,
+    2010,
+    316,
+    47072,
+    1728,
+    1319,
+    5127,
+    45870,
+    68
+   ],
+   "continuation": " play essential ecosystem life forms. Aerospelsomphiesma phophopuse",
+   "first_top": [
+    [
+     1486,
+     -3.2078
+    ],
+    [
+     11088,
+     -3.2297
+    ],
+    [
+     11,
+     -3.2532
+    ],
+    [
+     315,
+     -3.279
+    ],
+    [
+     8193,
+     -3.3632
+    ]
+   ]
+  },
+  {
+   "prompt": "Q: What is 12 multiplied by 7?\nA:",
+   "prompt_ids": [
+    48,
+    25,
+    3555,
+    374,
+    220,
+    16,
+    17,
+    54916,
+    553,
+    220,
+    22,
+    5267,
+    32,
+    25
+   ],
+   "continuation_ids": [
+    33677,
+    263,
+    4686,
+    10911,
+    35,
+    34496,
+    4686,
+    12,
+    2944,
+    4686,
+    12,
+    1897,
+    8631,
+    4686,
+    1448,
+    2863
+   ],
+   "continuation": " Codon-to-RDNAS-to-raft-to-ribmos-to-mau",
+   "first_top": [
+    [
+     33677,
+     -3.9762
+    ],
+    [
+     71059,
+     -4.2613
+    ],
+    [
+     220,
+     -4.353
+    ],
+    [
+     80210,
+     -4.3878
+    ],
+    [
+     93210,
+     -4.5915
+    ]
+   ]
+  },
+  {
+   "prompt": "The quick brown fox jumps over the lazy dog. This sentence is famous because",
+   "prompt_ids": [
+    785,
+    3974,
+    13876,
+    38835,
+    34208,
+    916,
+    279,
+    15678,
+    5562,
+    13,
+    1096,
+    11652,
+    374,
+    11245,
+    1576
+   ],
+   "continuation_ids": [
+    432,
+    374,
+    264,
+    69105,
+    938,
+    38835,
+    3668,
+    304,
+    279,
+    69105,
+    938,
+    38835,
+    504,
+    279,
+    10963,
+    13876
+   ],
+   "continuation": " it is a whimsical fox character in the whimsical fox from the magic brown",
+   "first_top": [
+    [
+     432,
+     -2.9418
+    ],
+    [
+     279,
+     -3.4497
+    ],
+    [
+     358,
+     -4.217
+    ],
+    [
+     1052,
+     -4.2542
+    ],
+    [
+     38835,
+     -4.6851
+    ]
+   ]
+  },
+  {
+   "prompt": "In 1969, the Apollo 11 mission",
+   "prompt_ids": [
+    641,
+    220,
+    16,
+    24,
+    21,
+    24,
+    11,
+    279,
+    35150,
+    220,
+    16,
+    16,
+    8954
+   ],
+   "continuation_ids": [
+    11,
+    892,
+    6069,
+    279,
+    220,
+    22,
+    17,
+    22,
+    14,
+    16,
+    15,
+    15,
+    15,
+    14,
+    16,
+    15
+   ],
+   "continuation": ", which led the 727/1000/10",
+   "first_top": [
+    [
+     11,
+     -2.8766
+    ],
+    [
+     304,
+     -2.9289
+    ],
+    [
+     6116,
+     -2.9437
+    ],
+    [
+     572,
+     -3.5483
+    ],
+    [
+     323,
+     -3.5819
+    ]
+   ]
+  },
+  {
+   "prompt": "A bonsai is a small tree grown in a container. To keep it small, the gardener",
+   "prompt_ids": [
+    32,
+    81034,
+    2143,
+    374,
+    264,
+    2613,
+    4916,
+    14700,
+    304,
+    264,
+    5476,
+    13,
+    2014,
+    2506,
+    432,
+    2613,
+    11,
+    279,
+    21881,
+    798
+   ],
+   "continuation_ids": [
+    3338,
+    18812,
+    323,
+    293,
+    562,
+    27064,
+    50031,
+    13,
+    576,
+    49023,
+    323,
+    31632,
+    436,
+    85803,
+    6291,
+    6291
+   ],
+   "continuation": " potlings and boklett pots. The nutrient and borosomite solution solution",
+   "first_top": [
+    [
+     3338,
+     -3.776
+    ],
+    [
+     594,
+     -3.9654
+    ],
+    [
+     374,
+     -4.001
+    ],
+    [
+     646,
+     -4.0942
+    ],
+    [
+     879,
+     -4.4034
+    ]
+   ]
+  }
+ ]
+}

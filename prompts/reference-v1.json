@@ -1,0 +1,13 @@
+{
+  "about": "Fixed prompts for checking a converted tree against the weights it came from. Plain text, no chat template: each is continued greedily for a few tokens.",
+  "prompts": [
+    "The capital of France is",
+    "def fibonacci(n):\n    \"\"\"Return the nth Fibonacci number.\"\"\"\n",
+    "Water boils at 100 degrees Celsius at sea level, but on a high mountain",
+    "Photosynthesis is the process by which plants",
+    "Q: What is 12 multiplied by 7?\nA:",
+    "The quick brown fox jumps over the lazy dog. This sentence is famous because",
+    "In 1969, the Apollo 11 mission",
+    "A bonsai is a small tree grown in a container. To keep it small, the gardener"
+  ]
+}

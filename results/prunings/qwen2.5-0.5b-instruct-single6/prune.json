@@ -1,0 +1,23 @@
+{
+  "name": "qwen2.5-0.5b-instruct-single6",
+  "seed": "qwen2.5-0.5b-instruct-weights",
+  "method": "single",
+  "removed_layers": [
+    10,
+    12,
+    13,
+    18,
+    19,
+    21
+  ],
+  "layers_before": 24,
+  "layers_after": 18,
+  "weights_sha256": "69e67ca5304148a7c186b84a5e6f10b04a203b6179c1a736a50f4c935ede7c41",
+  "scores": "results/prunings/qwen2.5-0.5b-instruct-weights/scores.json",
+  "calibration": {
+    "text": "wiki.train.raw",
+    "samples": 64,
+    "length": 512,
+    "tokens": 32704
+  }
+}

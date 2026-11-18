@@ -1,0 +1,23 @@
+{
+  "seed": "qwen2.5-0.5b-instruct-single8",
+  "planted_at": "2026-11-18T11:53:18Z",
+  "llama_cpp": {
+    "commit": "b1b770d90d94cad9e9ea5b993bdbc383a522fb28",
+    "build": "b12359"
+  },
+  "base": "qwen2.5-0.5b-instruct-single8-bf16.gguf",
+  "trees": [
+    {
+      "file": "qwen2.5-0.5b-instruct-single8-bf16.gguf",
+      "type": "bf16",
+      "bytes": 755505888,
+      "sha256": "6eee5883e99653e980e591bd0c022bcb0acadd59b85e475159bfa8465afeafd4"
+    },
+    {
+      "file": "qwen2.5-0.5b-instruct-single8-q4_k_m.gguf",
+      "type": "q4_k_m",
+      "bytes": 315397856,
+      "sha256": "5ac7e597b26e924e652bd6b06cee2388d57bb8ca830c5aeb2d5b3935f0718f91"
+    }
+  ]
+}

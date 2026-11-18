@@ -1,11 +1,13 @@
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 
+from bonsai import server as server_module
 from bonsai.llama import LlamaError
-from bonsai.server import LlamaServer, chat, free_port
+from bonsai.server import LlamaServer, chat, complete, free_port
 
 FAKE = Path(__file__).parent / "fake_llama_server.py"
 
@@ -71,6 +73,27 @@ def test_server_that_never_starts_is_reported(tmp_path: Path) -> None:
 def test_chat_failures_are_reported() -> None:
     with pytest.raises(LlamaError, match="chat request failed"):
         chat(f"http://127.0.0.1:{free_port()}", "hello")
+
+
+def test_server_continues_token_ids(tmp_path: Path) -> None:
+    with PythonServer(tmp_path) as server:
+        assert server.complete([5, 9], 3) == [10, 11, 12]
+
+
+@pytest.mark.parametrize(
+    ("call", "what"),
+    [
+        (lambda url: chat(url, "hello"), "chat"),
+        (lambda url: complete(url, [1], 2), "completion"),
+    ],
+)
+def test_unexpected_replies_are_reported(
+    call: Any, what: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(server_module, "_post", lambda url, body, label: {"x": 1})
+
+    with pytest.raises(LlamaError, match=f"{what} request failed: unexpected"):
+        call("http://unused")
 
 
 class StubbornProcess:

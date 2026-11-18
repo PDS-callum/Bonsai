@@ -1,0 +1,23 @@
+{
+  "seed": "qwen2.5-0.5b-instruct-weights",
+  "planted_at": "2026-11-18T11:48:57Z",
+  "llama_cpp": {
+    "commit": "b1b770d90d94cad9e9ea5b993bdbc383a522fb28",
+    "build": "b12359"
+  },
+  "base": "qwen2.5-0.5b-instruct-weights-bf16.gguf",
+  "trees": [
+    {
+      "file": "qwen2.5-0.5b-instruct-weights-bf16.gguf",
+      "type": "bf16",
+      "bytes": 994156640,
+      "sha256": "e17c155964df20e8cebb282caae895450029ec25ad4f3ac9e70e56d9c51c580e"
+    },
+    {
+      "file": "qwen2.5-0.5b-instruct-weights-q4_k_m.gguf",
+      "type": "q4_k_m",
+      "bytes": 397807712,
+      "sha256": "390d40a70c65825bf474cc41cb6b3d8c0295dc4535b1c6257017192d9f537f65"
+    }
+  ]
+}
