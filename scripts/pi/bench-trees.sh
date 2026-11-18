@@ -18,6 +18,7 @@
 #   threads.jsonl, sustained.jsonl        the extra runs
 #   telemetry.csv                         sampled every second
 #   build-info.json                       the llama.cpp build that ran
+#   trees.sha256                          each tree's checksum, for the journal
 #
 # Usage: bench-trees.sh <tree-dir> <out-dir>
 # Environment: THREADS (default 4), REPACK (llama.cpp weight repacking, 1 or 0;
@@ -53,6 +54,7 @@ reference_tree=${reference_trees[0]}
 
 mkdir -p "$out_dir"
 cp "$bin/build-info.json" "$out_dir/"
+(cd "$tree_dir" && sha256sum -- *.gguf) > "$out_dir/trees.sha256"
 python3 "$script_dir/pot_facts.py" "$home" > "$out_dir/facts-before.json"
 
 "$script_dir/telemetry.sh" > "$out_dir/telemetry.csv" &

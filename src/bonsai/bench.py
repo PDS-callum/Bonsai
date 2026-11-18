@@ -41,6 +41,9 @@ class BenchRun:
     stddev: float
     samples: tuple[float, ...]
     build_commit: str
+    repack: bool | None = None
+    """Whether llama.cpp repacked weights; None in records that predate it."""
+    test_time: str | None = None
 
     @property
     def test(self) -> str:
@@ -82,6 +85,10 @@ def parse_run(record: dict[str, Any], where: str = "record") -> BenchRun:
         stddev=float(_field(record, "stddev_ts", (int, float), where)),
         samples=tuple(float(s) for s in samples),
         build_commit=_field(record, "build_commit", str, where),
+        repack=record.get("repack") if isinstance(record.get("repack"), bool) else None,
+        test_time=record.get("test_time")
+        if isinstance(record.get("test_time"), str)
+        else None,
     )
 
 
