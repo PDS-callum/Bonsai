@@ -1,0 +1,21 @@
+{
+  "name": "qwen2.5-0.5b-instruct-block4",
+  "seed": "qwen2.5-0.5b-instruct-weights",
+  "method": "block",
+  "removed_layers": [
+    10,
+    11,
+    12,
+    13
+  ],
+  "layers_before": 24,
+  "layers_after": 20,
+  "weights_sha256": "94f572bb0538d64cde51e1a709a6ba54675d91eee3261ed7589a86324f348e7a",
+  "scores": "results/prunings/qwen2.5-0.5b-instruct-weights/scores.json",
+  "calibration": {
+    "text": "wiki.train.raw",
+    "samples": 64,
+    "length": 512,
+    "tokens": 32704
+  }
+}

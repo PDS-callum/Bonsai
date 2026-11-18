@@ -1,0 +1,483 @@
+{
+ "model": "C:\\Users\\callu\\bonsai\\seeds\\qwen2.5-0.5b-instruct-weights",
+ "tokens": 16,
+ "versions": {
+  "torch": "2.11.0+cpu",
+  "transformers": "4.57.6"
+ },
+ "answers": [
+  {
+   "prompt": "The capital of France is",
+   "prompt_ids": [
+    785,
+    6722,
+    315,
+    9625,
+    374
+   ],
+   "continuation_ids": [
+    12095,
+    13,
+    1084,
+    374,
+    279,
+    7772,
+    3283,
+    304,
+    4505,
+    323,
+    279,
+    4843,
+    7772,
+    3283,
+    304,
+    279
+   ],
+   "continuation": " Paris. It is the largest city in Europe and the third largest city in the",
+   "first_top": [
+    [
+     12095,
+     -1.1967
+    ],
+    [
+     32671,
+     -2.0944
+    ],
+    [
+     510,
+     -2.7186
+    ],
+    [
+     1447,
+     -2.8429
+    ],
+    [
+     1304,
+     -3.0271
+    ]
+   ]
+  },
+  {
+   "prompt": "def fibonacci(n):\n    \"\"\"Return the nth Fibonacci number.\"\"\"\n",
+   "prompt_ids": [
+    750,
+    75698,
+    1445,
+    982,
+    262,
+    4210,
+    5598,
+    279,
+    55129,
+    79683,
+    1372,
+    14442
+   ],
+   "continuation_ids": [
+    262,
+    421,
+    308,
+    621,
+    220,
+    15,
+    510,
+    286,
+    470,
+    220,
+    15,
+    198,
+    262,
+    4409,
+    308,
+    621
+   ],
+   "continuation": "    if n == 0:\n        return 0\n    elif n ==",
+   "first_top": [
+    [
+     262,
+     -0.025
+    ],
+    [
+     1066,
+     -4.7105
+    ],
+    [
+     2,
+     -5.9782
+    ],
+    [
+     750,
+     -6.1836
+    ],
+    [
+     333,
+     -6.4448
+    ]
+   ]
+  },
+  {
+   "prompt": "Water boils at 100 degrees Celsius at sea level, but on a high mountain",
+   "prompt_ids": [
+    28253,
+    88955,
+    518,
+    220,
+    16,
+    15,
+    15,
+    12348,
+    61347,
+    518,
+    9396,
+    2188,
+    11,
+    714,
+    389,
+    264,
+    1550,
+    16301
+   ],
+   "continuation_ids": [
+    11,
+    432,
+    1172,
+    24491,
+    220,
+    23,
+    15,
+    12348,
+    61347,
+    13,
+    1416,
+    279,
+    9315,
+    315,
+    279,
+    3015
+   ],
+   "continuation": ", it only reaches 80 degrees Celsius. If the temperature of the water",
+   "first_top": [
+    [
+     11,
+     -0.5504
+    ],
+    [
+     1380,
+     -2.2325
+    ],
+    [
+     2088,
+     -2.6675
+    ],
+    [
+     432,
+     -2.9254
+    ],
+    [
+     279,
+     -2.9972
+    ]
+   ]
+  },
+  {
+   "prompt": "Photosynthesis is the process by which plants",
+   "prompt_ids": [
+    31772,
+    73667,
+    374,
+    279,
+    1882,
+    553,
+    892,
+    10779
+   ],
+   "continuation_ids": [
+    11,
+    67851,
+    11,
+    323,
+    1045,
+    23157,
+    5508,
+    3100,
+    4802,
+    1119,
+    11483,
+    4802,
+    9768,
+    304,
+    33223,
+    13
+   ],
+   "continuation": ", algae, and some bacteria convert light energy into chemical energy stored in glucose.",
+   "first_top": [
+    [
+     11,
+     -0.9822
+    ],
+    [
+     323,
+     -1.9688
+    ],
+    [
+     990,
+     -2.1786
+    ],
+    [
+     5508,
+     -2.2322
+    ],
+    [
+     8193,
+     -2.8165
+    ]
+   ]
+  },
+  {
+   "prompt": "Q: What is 12 multiplied by 7?\nA:",
+   "prompt_ids": [
+    48,
+    25,
+    3555,
+    374,
+    220,
+    16,
+    17,
+    54916,
+    553,
+    220,
+    22,
+    5267,
+    32,
+    25
+   ],
+   "continuation_ids": [
+    220,
+    23,
+    19,
+    198,
+    840,
+    20772,
+    1246,
+    582,
+    17331,
+    518,
+    419,
+    4226,
+    510,
+    1249,
+    11625,
+    419
+   ],
+   "continuation": " 84\nExplain how we arrive at this answer:\nTo solve this",
+   "first_top": [
+    [
+     220,
+     -0.118
+    ],
+    [
+     2014,
+     -3.3612
+    ],
+    [
+     400,
+     -3.6374
+    ],
+    [
+     576,
+     -3.9101
+    ],
+    [
+     29948,
+     -6.1768
+    ]
+   ]
+  },
+  {
+   "prompt": "The quick brown fox jumps over the lazy dog. This sentence is famous because",
+   "prompt_ids": [
+    785,
+    3974,
+    13876,
+    38835,
+    34208,
+    916,
+    279,
+    15678,
+    5562,
+    13,
+    1096,
+    11652,
+    374,
+    11245,
+    1576
+   ],
+   "continuation_ids": [
+    432,
+    374,
+    264,
+    73097,
+    13,
+    3555,
+    374,
+    279,
+    1372,
+    315,
+    11931,
+    304,
+    279,
+    3409,
+    330,
+    27763
+   ],
+   "continuation": " it is a palindrome. What is the number of letters in the word \"quick",
+   "first_top": [
+    [
+     432,
+     -0.6647
+    ],
+    [
+     315,
+     -1.4611
+    ],
+    [
+     1447,
+     -2.663
+    ],
+    [
+     510,
+     -3.5823
+    ],
+    [
+     279,
+     -3.6365
+    ]
+   ]
+  },
+  {
+   "prompt": "In 1969, the Apollo 11 mission",
+   "prompt_ids": [
+    641,
+    220,
+    16,
+    24,
+    21,
+    24,
+    11,
+    279,
+    35150,
+    220,
+    16,
+    16,
+    8954
+   ],
+   "continuation_ids": [
+    572,
+    279,
+    1156,
+    311,
+    4268,
+    12677,
+    389,
+    279,
+    17330,
+    13,
+    576,
+    8954,
+    572,
+    264,
+    6765,
+    2393
+   ],
+   "continuation": " was the first to land humans on the Moon. The mission was a huge success",
+   "first_top": [
+    [
+     572,
+     -1.6776
+    ],
+    [
+     3208,
+     -2.3651
+    ],
+    [
+     26120,
+     -2.4732
+    ],
+    [
+     311,
+     -2.6402
+    ],
+    [
+     7790,
+     -2.9273
+    ]
+   ]
+  },
+  {
+   "prompt": "A bonsai is a small tree grown in a container. To keep it small, the gardener",
+   "prompt_ids": [
+    32,
+    81034,
+    2143,
+    374,
+    264,
+    2613,
+    4916,
+    14700,
+    304,
+    264,
+    5476,
+    13,
+    2014,
+    2506,
+    432,
+    2613,
+    11,
+    279,
+    21881,
+    798
+   ],
+   "continuation_ids": [
+    27627,
+    311,
+    990,
+    264,
+    3281,
+    1714,
+    311,
+    6629,
+    279,
+    2608,
+    315,
+    279,
+    81034,
+    2143,
+    13,
+    1260
+   ],
+   "continuation": " decides to use a special method to measure the height of the bonsai. He",
+   "first_top": [
+    [
+     27627,
+     -2.1462
+    ],
+    [
+     6801,
+     -2.3333
+    ],
+    [
+     5711,
+     -2.4199
+    ],
+    [
+     6635,
+     -2.4899
+    ],
+    [
+     3880,
+     -2.6421
+    ]
+   ]
+  }
+ ]
+}

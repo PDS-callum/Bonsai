@@ -1,0 +1,483 @@
+{
+ "model": "C:\\Users\\callu\\bonsai\\seeds\\qwen2.5-0.5b-instruct-single6",
+ "tokens": 16,
+ "versions": {
+  "torch": "2.11.0+cpu",
+  "transformers": "4.57.6"
+ },
+ "answers": [
+  {
+   "prompt": "The capital of France is",
+   "prompt_ids": [
+    785,
+    6722,
+    315,
+    9625,
+    374
+   ],
+   "continuation_ids": [
+    12095,
+    11,
+    264,
+    6481,
+    1352,
+    315,
+    279,
+    69140,
+    1352,
+    315,
+    279,
+    69140,
+    1352,
+    315,
+    279,
+    69140
+   ],
+   "continuation": " Paris, a modern form of the flor form of the flor form of the flor",
+   "first_top": [
+    [
+     12095,
+     -2.8638
+    ],
+    [
+     279,
+     -2.9043
+    ],
+    [
+     264,
+     -2.9995
+    ],
+    [
+     55201,
+     -4.1125
+    ],
+    [
+     50675,
+     -4.6436
+    ]
+   ]
+  },
+  {
+   "prompt": "def fibonacci(n):\n    \"\"\"Return the nth Fibonacci number.\"\"\"\n",
+   "prompt_ids": [
+    750,
+    75698,
+    1445,
+    982,
+    262,
+    4210,
+    5598,
+    279,
+    55129,
+    79683,
+    1372,
+    14442
+   ],
+   "continuation_ids": [
+    262,
+    421,
+    308,
+    621,
+    220,
+    15,
+    510,
+    286,
+    470,
+    220,
+    15,
+    11,
+    220,
+    15,
+    198,
+    262
+   ],
+   "continuation": "    if n == 0:\n        return 0, 0\n   ",
+   "first_top": [
+    [
+     262,
+     -0.0153
+    ],
+    [
+     1066,
+     -5.0395
+    ],
+    [
+     220,
+     -5.5909
+    ],
+    [
+     286,
+     -6.7061
+    ],
+    [
+     1789,
+     -6.9932
+    ]
+   ]
+  },
+  {
+   "prompt": "Water boils at 100 degrees Celsius at sea level, but on a high mountain",
+   "prompt_ids": [
+    28253,
+    88955,
+    518,
+    220,
+    16,
+    15,
+    15,
+    12348,
+    61347,
+    518,
+    9396,
+    2188,
+    11,
+    714,
+    389,
+    264,
+    1550,
+    16301
+   ],
+   "continuation_ids": [
+    11,
+    279,
+    44375,
+    7262,
+    374,
+    31393,
+    263,
+    31393,
+    2356,
+    7262,
+    13,
+    576,
+    44375,
+    9315,
+    374,
+    31393
+   ],
+   "continuation": ", the atmospheric pressure isobaronobarium pressure. The atmospheric temperature isobar",
+   "first_top": [
+    [
+     11,
+     -1.5217
+    ],
+    [
+     782,
+     -1.7115
+    ],
+    [
+     1380,
+     -3.3089
+    ],
+    [
+     41730,
+     -3.3788
+    ],
+    [
+     16162,
+     -3.5028
+    ]
+   ]
+  },
+  {
+   "prompt": "Photosynthesis is the process by which plants",
+   "prompt_ids": [
+    31772,
+    73667,
+    374,
+    279,
+    1882,
+    553,
+    892,
+    10779
+   ],
+   "continuation_ids": [
+    525,
+    279,
+    1172,
+    1849,
+    304,
+    279,
+    3015,
+    1455,
+    4978,
+    315,
+    279,
+    24982,
+    13,
+    576,
+    20100,
+    76
+   ],
+   "continuation": " are the only system in the water-balance of the ecosystem. The stomm",
+   "first_top": [
+    [
+     525,
+     -2.1203
+    ],
+    [
+     374,
+     -2.2368
+    ],
+    [
+     323,
+     -2.5658
+    ],
+    [
+     11,
+     -2.954
+    ],
+    [
+     315,
+     -3.9536
+    ]
+   ]
+  },
+  {
+   "prompt": "Q: What is 12 multiplied by 7?\nA:",
+   "prompt_ids": [
+    48,
+    25,
+    3555,
+    374,
+    220,
+    16,
+    17,
+    54916,
+    553,
+    220,
+    22,
+    5267,
+    32,
+    25
+   ],
+   "continuation_ids": [
+    220,
+    16,
+    17,
+    374,
+    220,
+    16,
+    17,
+    13,
+    17,
+    13,
+    220,
+    16,
+    17,
+    13,
+    17,
+    374
+   ],
+   "continuation": " 12 is 12.2. 12.2 is",
+   "first_top": [
+    [
+     220,
+     -2.7512
+    ],
+    [
+     576,
+     -3.2287
+    ],
+    [
+     362,
+     -3.722
+    ],
+    [
+     12359,
+     -3.9199
+    ],
+    [
+     12839,
+     -3.9428
+    ]
+   ]
+  },
+  {
+   "prompt": "The quick brown fox jumps over the lazy dog. This sentence is famous because",
+   "prompt_ids": [
+    785,
+    3974,
+    13876,
+    38835,
+    34208,
+    916,
+    279,
+    15678,
+    5562,
+    13,
+    1096,
+    11652,
+    374,
+    11245,
+    1576
+   ],
+   "continuation_ids": [
+    279,
+    5562,
+    374,
+    264,
+    45350,
+    938,
+    13042,
+    315,
+    279,
+    1931,
+    5562,
+    13,
+    576,
+    45350,
+    374,
+    264
+   ],
+   "continuation": " the dog is a metaphorical representation of the real dog. The metaphor is a",
+   "first_top": [
+    [
+     279,
+     -2.2001
+    ],
+    [
+     432,
+     -2.3219
+    ],
+    [
+     566,
+     -2.8222
+    ],
+    [
+     358,
+     -3.717
+    ],
+    [
+     315,
+     -3.8362
+    ]
+   ]
+  },
+  {
+   "prompt": "In 1969, the Apollo 11 mission",
+   "prompt_ids": [
+    641,
+    220,
+    16,
+    24,
+    21,
+    24,
+    11,
+    279,
+    35150,
+    220,
+    16,
+    16,
+    8954
+   ],
+   "continuation_ids": [
+    572,
+    264,
+    42191,
+    304,
+    279,
+    11487,
+    16629,
+    24327,
+    88210,
+    6351,
+    6351,
+    6351,
+    6351,
+    6351,
+    6351,
+    6351
+   ],
+   "continuation": " was a milestone in the Space Station Freedom docking complex complex complex complex complex complex complex",
+   "first_top": [
+    [
+     572,
+     -2.4805
+    ],
+    [
+     374,
+     -2.6932
+    ],
+    [
+     6116,
+     -2.7657
+    ],
+    [
+     9044,
+     -3.1431
+    ],
+    [
+     13075,
+     -3.4535
+    ]
+   ]
+  },
+  {
+   "prompt": "A bonsai is a small tree grown in a container. To keep it small, the gardener",
+   "prompt_ids": [
+    32,
+    81034,
+    2143,
+    374,
+    264,
+    2613,
+    4916,
+    14700,
+    304,
+    264,
+    5476,
+    13,
+    2014,
+    2506,
+    432,
+    2613,
+    11,
+    279,
+    21881,
+    798
+   ],
+   "continuation_ids": [
+    646,
+    42829,
+    279,
+    4916,
+    304,
+    264,
+    3338,
+    11,
+    323,
+    279,
+    5476,
+    374,
+    264,
+    12188,
+    92384,
+    13
+   ],
+   "continuation": " can transplant the tree in a pot, and the container is a plastic vase.",
+   "first_top": [
+    [
+     646,
+     -2.8155
+    ],
+    [
+     374,
+     -3.4008
+    ],
+    [
+     594,
+     -3.892
+    ],
+    [
+     1053,
+     -4.0637
+    ],
+    [
+     323,
+     -4.0808
+    ]
+   ]
+  }
+ ]
+}

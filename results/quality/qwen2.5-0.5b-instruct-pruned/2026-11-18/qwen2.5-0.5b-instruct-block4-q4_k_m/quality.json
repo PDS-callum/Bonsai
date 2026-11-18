@@ -1,0 +1,45 @@
+{
+  "tree": "qwen2.5-0.5b-instruct-block4-q4_k_m.gguf",
+  "bytes": 356602784,
+  "sha256": "11439f09cfe43e8be3b499c7b5086e28e5670970ac12b5336605c1746e913a05",
+  "measured_at": "2026-11-18T12:48:42Z",
+  "llama_cpp": "b12359",
+  "data": "quality-v1",
+  "perplexity": {
+    "value": 21.5861,
+    "stderr": 0.16468,
+    "context": 512
+  },
+  "kl_divergence": {
+    "base": "qwen2.5-0.5b-instruct-fp16.gguf",
+    "chunks": 32,
+    "mean": 0.438754,
+    "mean_stderr": 0.005979,
+    "p99": 2.597459,
+    "same_top_pct": 67.157,
+    "same_top_pct_stderr": 0.52,
+    "ppl_ratio": 1.432158,
+    "ppl_ratio_stderr": 0.016979
+  },
+  "arc": {
+    "accuracy_pct": 41.7722,
+    "stderr_pct": 1.674
+  },
+  "gsm8k": {
+    "size": 400,
+    "seed": 0,
+    "correct": 10,
+    "accuracy": 0.025,
+    "ci95": [
+      0.013634943739762435,
+      0.045402064829934204
+    ],
+    "answer_rules": {
+      "answer-is": 164,
+      "last-number": 222,
+      "boxed": 3,
+      "none": 11
+    },
+    "mean_tokens": 377.635
+  }
+}
