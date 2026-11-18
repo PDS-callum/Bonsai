@@ -263,6 +263,24 @@ def test_a_late_difference_is_tolerated_but_an_early_one_is_not() -> None:
     assert failed["first_tokens_agree"] == 1
 
 
+def test_a_near_tie_on_the_first_token_is_tolerated() -> None:
+    tied = {"answers": [
+        {"prompt_ids": [1], "continuation_ids": [5, 6],
+         "first_top": [[5, -1.0], [9, -1.05], [7, -2.0]]},
+        {"prompt_ids": [2], "continuation_ids": [3, 4]},
+    ]}  # fmt: skip
+
+    def answer(token: int) -> Any:
+        return lambda ids, n: [token, 0] if ids == [1] else counting(ids, n)
+
+    assert compare(tied, answer(9))["near_ties"] == 1
+    assert compare(tied, answer(9))["first_tokens_agree"] == 2
+    assert compare(tied, answer(7))["first_tokens_agree"] == 1  # not a tie
+    assert compare(tied, answer(8))["first_tokens_agree"] == 1  # not in the top
+    no_top = {"answers": [{"prompt_ids": [1], "continuation_ids": [5]}]}
+    assert compare(no_top, lambda ids, n: [])["first_tokens_agree"] == 0
+
+
 def test_reference_answers_run_the_tool(tmp_path: Path) -> None:
     tool = FakeTool(REFERENCE)
 

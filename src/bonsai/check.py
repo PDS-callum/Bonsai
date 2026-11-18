@@ -7,9 +7,11 @@ set of prompts greedily, and the tokens are compared with what the original
 weights produce in PyTorch at float32 (``layer_tool.py reference``).
 
 Both sides start from the same token ids, so tokenisation cannot hide a
-difference. Near-ties can still flip a later token between two correct
-implementations, so the check asks that every prompt's first token agrees and
-that most tokens agree up to the first difference.
+difference. Two correct implementations can still differ where the next token
+is a near-tie, which grows more common as pruning damages a model. So the
+check asks that every prompt's first token agrees, or is one PyTorch scores
+within ``TIE`` nats of its own choice, and that most tokens agree up to the
+first difference. A broken conversion fails both by a wide margin.
 """
 
 from __future__ import annotations
@@ -23,6 +25,8 @@ from bonsai.llama import ToolRunner, run_tool
 from bonsai.prune import tool_command
 
 PROMPTS = Path("prompts/reference-v1.json")
+TIE = 0.1
+"""How close, in nats, two first tokens' log-probabilities count as a tie."""
 Continue = Callable[[Sequence[int], int], list[int]]
 
 
@@ -66,6 +70,15 @@ def _prefix(a: Sequence[int], b: Sequence[int]) -> int:
     return min(len(a), len(b))
 
 
+def _near_tie(answer: dict[str, Any], token: int | None) -> bool:
+    """Whether PyTorch scored ``token`` within ``TIE`` of its first choice."""
+    top = answer.get("first_top") or []
+    if not top or token is None:
+        return False
+    best = top[0][1]
+    return any(t == token and best - logprob <= TIE for t, logprob in top)
+
+
 def compare(
     reference: dict[str, Any], continue_: Continue, *, min_agreement: float = 0.75
 ) -> dict[str, Any]:
@@ -74,19 +87,22 @@ def compare(
     for answer in reference["answers"]:
         expected = answer["continuation_ids"]
         got = continue_(answer["prompt_ids"], len(expected))
+        agree = _prefix(expected, got)
         results.append({
             "prompt": answer.get("prompt", ""),
             "expected": expected,
             "got": got,
-            "agree": _prefix(expected, got),
+            "agree": agree,
+            "near_tie": agree == 0 and _near_tie(answer, got[0] if got else None),
         })  # fmt: skip
     total = sum(len(r["expected"]) for r in results)
     agreed = sum(r["agree"] for r in results)
-    first = sum(r["agree"] > 0 for r in results)
+    first = sum(r["agree"] > 0 or r["near_tie"] for r in results)
     agreement = agreed / total if total else 0.0
     return {
         "prompts": len(results),
         "first_tokens_agree": first,
+        "near_ties": sum(r["near_tie"] for r in results),
         "tokens_agree": agreed,
         "tokens": total,
         "agreement": round(agreement, 4),

@@ -177,10 +177,11 @@ def check_command(
     result["tree"] = tree.name
     _write_json(target / "check.json", result)
     verdict = "passed" if result["passed"] else "FAILED"
+    ties = f" ({result['near_ties']} as near-ties)" if result["near_ties"] else ""
     typer.echo(
         f"{tree.name}: {verdict}. First tokens agree on {result['first_tokens_agree']}"
-        f"/{result['prompts']} prompts; {result['tokens_agree']}/{result['tokens']} "
-        f"tokens agree ({result['agreement']:.0%})."
+        f"/{result['prompts']} prompts{ties}; {result['tokens_agree']}/"
+        f"{result['tokens']} tokens agree ({result['agreement']:.0%})."
     )
     if not result["passed"]:
         raise typer.Exit(1)

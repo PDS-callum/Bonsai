@@ -99,15 +99,28 @@ def reference(args: argparse.Namespace) -> dict:
     with torch.no_grad():
         for prompt in prompts:
             ids = tokenizer(prompt, return_tensors="pt").input_ids
-            out = model.generate(
-                ids, max_new_tokens=args.tokens, do_sample=False,
-                pad_token_id=tokenizer.eos_token_id,
-            )  # fmt: skip
+            # A plain argmax loop rather than generate(), which would apply the
+            # model's generation config (repetition penalty and so on) even
+            # without sampling; llama-server applies none of it.
+            sequence = ids
+            first: list[list[float]] = []
+            for step in range(args.tokens):
+                logprobs = torch.log_softmax(model(sequence).logits[0, -1], -1)
+                if step == 0:
+                    top = torch.topk(logprobs, 5)
+                    first = [
+                        [int(i), round(float(v), 4)]
+                        for v, i in zip(top.values, top.indices, strict=True)
+                    ]
+                choice = torch.argmax(logprobs).view(1, 1)
+                sequence = torch.cat([sequence, choice], dim=1)
+            continuation = sequence[0, ids.shape[1] :]
             answers.append({
                 "prompt": prompt,
                 "prompt_ids": ids[0].tolist(),
-                "continuation_ids": out[0, ids.shape[1]:].tolist(),
-                "continuation": tokenizer.decode(out[0, ids.shape[1]:]),
+                "continuation_ids": continuation.tolist(),
+                "continuation": tokenizer.decode(continuation),
+                "first_top": first,
             })  # fmt: skip
     return {"model": str(args.model), "tokens": args.tokens,
             "versions": versions(), "answers": answers}  # fmt: skip
