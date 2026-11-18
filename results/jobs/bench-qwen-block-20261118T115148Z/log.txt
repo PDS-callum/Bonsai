@@ -1,0 +1,8 @@
+== qwen2.5-0.5b-instruct-block2-q4_k_m.gguf: pp128 and tg128, 3 threads, repack 0, 5 repetitions
+== qwen2.5-0.5b-instruct-block4-q4_k_m.gguf: pp128 and tg128, 3 threads, repack 0, 5 repetitions
+== qwen2.5-0.5b-instruct-block6-q4_k_m.gguf: pp128 and tg128, 3 threads, repack 0, 5 repetitions
+== qwen2.5-0.5b-instruct-block8-q4_k_m.gguf: pp128 and tg128, 3 threads, repack 0, 5 repetitions
+== qwen2.5-0.5b-instruct-weights-q4_k_m.gguf: pp128 and tg128, 3 threads, repack 0, 5 repetitions
+== threads: qwen2.5-0.5b-instruct-weights-q4_k_m.gguf, tg128 at 1-4 threads
+== sustained: qwen2.5-0.5b-instruct-weights-q4_k_m.gguf, tg1024 x 3
+== done

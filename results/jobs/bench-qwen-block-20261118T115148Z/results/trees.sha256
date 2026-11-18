@@ -1,0 +1,5 @@
+3fae445dff9c1f49d0975803e99fdeae1b0f01bdace099b86ec00cc9797d9c5b  qwen2.5-0.5b-instruct-block2-q4_k_m.gguf
+11439f09cfe43e8be3b499c7b5086e28e5670970ac12b5336605c1746e913a05  qwen2.5-0.5b-instruct-block4-q4_k_m.gguf
+793664f1810fe6be769e1939a673fe445f852185d71f2d79bba0ebdb9dd243d5  qwen2.5-0.5b-instruct-block6-q4_k_m.gguf
+f1472d8eadd41dacddb888ea41215d8748b7bb659383c96f08ec383d2842883d  qwen2.5-0.5b-instruct-block8-q4_k_m.gguf
+390d40a70c65825bf474cc41cb6b3d8c0295dc4535b1c6257017192d9f537f65  qwen2.5-0.5b-instruct-weights-q4_k_m.gguf
