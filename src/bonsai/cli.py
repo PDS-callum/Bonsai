@@ -7,8 +7,10 @@ import typer
 
 from bonsai import __version__
 from bonsai.bench import BenchError, format_report, load_runs
-from bonsai.fetch import FetchError, destination, fetch, load_manifest
+from bonsai.fetch import FetchError, bonsai_home, destination, fetch, load_manifest
 from bonsai.job_cli import job_app
+from bonsai.llama import LlamaError, default_bin_dir
+from bonsai.plant import DEFAULT_TYPES, Pin, PlantError, plant
 from bonsai.pot import GIB, Pot, PotError, load_pot
 from bonsai.quality_cli import quality_app
 from bonsai.weights import weight_bytes
@@ -167,3 +169,50 @@ def fetch_command(
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error
     typer.echo(f"files in {destination(loaded)}")
+
+
+@app.command("plant")
+def plant_command(
+    manifest: Annotated[
+        Path,
+        typer.Argument(
+            help="The seed's manifest, e.g. configs/seeds/smollm2-360m-instruct.toml.",
+            exists=True,
+            dir_okay=False,
+        ),
+    ],
+    types: Annotated[
+        str,
+        typer.Option(help="Comma-separated llama-quantize types to plant."),
+    ] = ",".join(DEFAULT_TYPES),
+    base_type: Annotated[
+        str,
+        typer.Option(help="Full-precision type to convert the seed to first."),
+    ] = "bf16",
+    out: Annotated[
+        Path | None,
+        typer.Option(help="Where to write the trees. Default: ~/bonsai/trees/<seed>."),
+    ] = None,
+) -> None:
+    """Plant GGUF trees from a seed's original weights, with the pinned llama.cpp."""
+    try:
+        loaded = load_manifest(manifest)
+        if loaded.kind != "seeds":
+            msg = f"{manifest} is a {loaded.kind} manifest, not a seed"
+            raise PlantError(msg)
+        out_dir = out or bonsai_home() / "trees" / loaded.name
+        record = plant(
+            destination(loaded),
+            out_dir,
+            loaded.name,
+            source=bonsai_home() / "llama.cpp",
+            bin_dir=default_bin_dir(),
+            pin=Pin.load(Path("configs/llama-cpp.env")),
+            types=[kind.strip().lower() for kind in types.split(",") if kind.strip()],
+            base_type=base_type,
+            log=typer.echo,
+        )
+    except (FetchError, LlamaError, PlantError) as error:
+        typer.echo(f"error: {error}", err=True)
+        raise typer.Exit(1) from error
+    typer.echo(f"{len(record['trees'])} trees in {out_dir}")
