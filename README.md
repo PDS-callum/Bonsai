@@ -249,7 +249,7 @@ expert pruning, a custom inference engine, and growing models upward.
 - [x] At least one seed has been depth-pruned at several cut sizes, repotted,
       checked and measured
 - [x] Every tree in the plot can be traced through the journal to its seed
-- [ ] The frontier plot and a short write-up of what was learned are in `results/`
+- [x] The frontier plot and a short write-up of what was learned are in `results/`
 
 ---
 
@@ -393,6 +393,7 @@ uv run bonsai journal build
 uv run bonsai journal trees               # every tree and its measurements
 uv run bonsai journal lineage <tree>      # back to its original seed
 uv run bonsai journal frontier            # quality against speed in the pot
+uv run bonsai journal plot                # the same, drawn: results/frontier/frontier.svg
 
 # Prune by depth: score the layers, cut, plant, then check before measuring
 uv run bonsai fetch configs/seeds/qwen2.5-0.5b-instruct-weights.toml
@@ -449,7 +450,7 @@ uv run pytest
 - [x] Planting trees from a seed's original weights
 - [x] Off-the-shelf frontier: Qwen2.5-0.5B and SmolLM2-360M
 - [x] Depth pruning, repotting and reference checks
-- [ ] First frontier plot and write-up
+- [x] First frontier plot and write-up
 
 **Phase 2: Wiring**
 - [ ] Heal pruned trees by distillation from their seed
@@ -786,6 +787,34 @@ What they show:
   from the original weights with the pinned llama.cpp, is 19% smaller than
   Qwen's own Q4_K_M, runs as fast and scores the same on both tasks, so the
   pruned trees are compared with it rather than with Qwen's file.
+
+**The first frontier plot.** Every tree measured so far, drawn from the journal
+with `bonsai journal plot`
+([`results/frontier/frontier.svg`](results/frontier/frontier.svg)). Speed is
+generation in the pot with its settings; the dashed line is the frontier, the
+best quality available at each speed or faster.
+
+![GSM8K and ARC against generation speed in the pot, for Qwen2.5-0.5B, its depth-pruned trees and SmolLM2-360M](results/frontier/frontier.svg)
+
+What Phase 1 learned:
+
+- **In this pot, speed is bytes per token.** With the pot's settings, every
+  quantised tree generates close to the memory-bandwidth ceiling, whether its
+  bytes were saved by quantisation or by cutting layers. Any way of shrinking a tree
+  can be priced in advance; only its quality has to be measured.
+- **The frontier belongs to two off-the-shelf families.** Qwen2.5-0.5B holds it
+  up to 34 t/s and SmolLM2-360M above. On maths the step between them is a
+  cliff: from 29% of GSM8K at 34 t/s to 6% at 41.5 t/s.
+- **Pruning alone lands below the frontier.** Cutting layers buys speed in a
+  smooth line, but on GSM8K the pruned trees fall to the floor with SmolLM2,
+  and on ARC each is beaten by a faster unpruned tree. The plot's empty corner, above
+  34 t/s and well above SmolLM2's maths, is the target for Phase 2: block-pruned
+  Qwen trees, healed by distillation from their seed.
+- **Quick signals point the right way.** KL divergence, from 32 chunks of
+  text, moved with the task scores through both quantisation and pruning, and
+  the reference check caught a
+  real fault (llama-server applying a GGUF's suggested sampling) before it
+  could reach the results.
 
 ---
 
