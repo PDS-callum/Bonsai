@@ -228,5 +228,7 @@ def plant_command(
         raise typer.Exit(1) from error
     kept = record_dir / planted["seed"] / planted["planted_at"][:10] / "planting.json"
     kept.parent.mkdir(parents=True, exist_ok=True)
-    kept.write_text(json.dumps(planted, indent=2) + "\n", encoding="utf-8")
+    kept.write_text(
+        json.dumps(planted, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
     typer.echo(f"{len(planted['trees'])} trees in {out_dir}; record in {kept}")
