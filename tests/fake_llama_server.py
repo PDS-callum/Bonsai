@@ -1,8 +1,9 @@
-"""A stand-in for llama-server: answers /health and chat completions.
+"""A stand-in for llama-server: answers /health, chat and raw completions.
 
 Takes the same --port option (ignoring the rest). Every chat reply echoes the
 last line of the prompt and claims the answer is 42, so tests can check what
-was asked and what came back. With --fail, it exits at once instead.
+was asked and what came back. A raw completion of token ids continues by
+counting up from the last one. With --fail, it exits at once instead.
 """
 
 import json
@@ -27,6 +28,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        if self.path == "/completion":
+            last = request["prompt"][-1]
+            count = request["n_predict"]
+            self._send(200, {"tokens": list(range(last + 1, last + 1 + count))})
+            return
         prompt = request["messages"][-1]["content"]
         text = f"{prompt.splitlines()[-1]}\nThe answer is: 42"
         self._send(
