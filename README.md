@@ -730,6 +730,63 @@ Q4_K_M runs at 41.5 t/s. That gap sets the first target for pruning: a pruned
 Qwen tree that runs faster than 34 t/s and keeps more than SmolLM2's quality
 moves the frontier.
 
+**Depth pruning Qwen2.5-0.5B** (2026-11-18). Layers were scored on WikiText-2's
+training split, then 2, 4, 6 and 8 of the 24 were cut from the original
+weights in two ways: the run of consecutive layers that changes the hidden
+state least (*block*, after Gromov et al.), or the layers that each change it
+least on their own (*single*, after ShortGPT). Every tree was planted at
+Q4_K_M with the unpruned weights as a control, and passed its reference check
+before being measured. Raw data:
+[scores and records](results/prunings),
+[checks](results/checks),
+[speed (block)](results/jobs/bench-qwen-block-20261118T115148Z),
+[speed (single)](results/jobs/bench-qwen-single-20261118T120724Z),
+[quality](results/quality/qwen2.5-0.5b-instruct-pruned/2026-11-18).
+
+| Tree | Layers removed | File | Generation | Peak memory | Perplexity | KL divergence | ARC | GSM8K |
+|---|---|---|---|---|---|---|---|---|
+| Control | – | 398 MB | 30.0 t/s | 464 MB | 15.57 ± 0.12 | 0.0577 | 45.8% ± 1.7 | 42.0% (37.3–46.9%) |
+| Block 2 | 12–13 | 376 MB | 31.9 t/s | 442 MB | 18.69 ± 0.14 | 0.2621 | 44.8% ± 1.7 | 2.2% (1.2–4.2%) |
+| Single 2 | 13, 18 | 376 MB | 32.0 t/s | 442 MB | 20.98 ± 0.16 | 0.3354 | 41.5% ± 1.7 | 3.5% (2.1–5.8%) |
+| Block 4 | 10–13 | 357 MB | 33.7 t/s | 421 MB | 21.59 ± 0.16 | 0.4388 | 41.8% ± 1.7 | 2.5% (1.4–4.5%) |
+| Single 4 | 10, 12, 13, 18 | 357 MB | 33.7 t/s | 420 MB | 25.59 ± 0.20 | 0.5831 | 36.9% ± 1.6 | 1.2% (0.5–2.9%) |
+| Block 6 | 8–13 | 336 MB | 35.9 t/s | 400 MB | 27.77 ± 0.21 | 0.7008 | 38.2% ± 1.6 | 1.8% (0.9–3.6%) |
+| Single 6 | 10, 12, 13, 18, 19, 21 | 336 MB | 36.1 t/s | 400 MB | 105.24 ± 0.87 | 1.9018 | 33.0% ± 1.6 | 1.8% (0.9–3.6%) |
+| Block 8 | 7–14 | 315 MB | 38.7 t/s | 379 MB | 46.52 ± 0.36 | 1.2188 | 36.5% ± 1.6 | 1.2% (0.5–2.9%) |
+| Single 8 | 10–13, 17–19, 21 | 315 MB | 38.6 t/s | 379 MB | 272.28 ± 2.42 | 2.7919 | 36.2% ± 1.6 | 1.0% (0.4–2.5%) |
+
+KL divergence is measured from Qwen's own F16 GGUF, as before.
+
+What they show:
+
+- **Speed follows the layers left, as bytes per token predict.** Each layer
+  costs about 21 MB at Q4_K_M, and every tree ran at 95–96% of its ceiling:
+  cutting 8 layers (83 MB, 21% of the file) bought 29% more speed and
+  saved 85 MB of memory. Both methods run at the same speed for the same cut,
+  so only quality tells them apart.
+- **Cut a block, not the weakest singles.** Block pruning keeps more of the
+  seed at every cut size: lower perplexity and KL divergence throughout, and
+  higher ARC up to 6 layers. Scoring layers one at a time misses how they
+  interact: the singles chosen after layer 13 (17–21) each look harmless, but
+  together they cost far more than their scores suggest, and single 8's
+  perplexity is six times block 8's.
+- **Knowledge degrades gradually; maths collapses at once.** ARC falls about a
+  point per layer cut (chance is 25%). GSM8K falls from 42% to 2–3.5% with
+  only two layers gone, whichever two. The replies stay fluent but the
+  arithmetic breaks ("3 * 4 = 12 eggs"), and they lose their way: 156 of
+  block 2's 400 replies ran out of tokens before an answer, against 19 for the
+  control, and all but two of block 8's did.
+- **No pruned tree moves the frontier.** The fastest, block 8 at 38.7 t/s, is
+  slower than SmolLM2's Q4_K_M (41.5 t/s) and worse on both tasks. Block 2 runs
+  at the same speed as SmolLM2's Q6_K (31.9 t/s) and keeps more of ARC, but
+  solves a quarter as many GSM8K problems. Pruning without healing gives back
+  more quality than the speed it buys, which is the gap healing by
+  distillation (Phase 2) has to close.
+- **Planting from the weights gives a smaller tree.** The control, planted
+  from the original weights with the pinned llama.cpp, is 19% smaller than
+  Qwen's own Q4_K_M, runs as fast and scores the same on both tasks, so the
+  pruned trees are compared with it rather than with Qwen's file.
+
 ---
 
 ## License
