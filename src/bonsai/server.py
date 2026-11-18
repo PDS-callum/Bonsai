@@ -22,6 +22,20 @@ from typing import IO, Any
 
 from bonsai.llama import LlamaError
 
+# GGUFs can carry their makers' suggested sampling settings (llama.cpp's
+# converter copies them from generation_config.json), which llama-server then
+# applies by default: Qwen2.5's include a repetition penalty of 1.1. Measuring
+# must not depend on what a file suggests, so every request sets plain greedy
+# decoding explicitly.
+GREEDY: dict[str, Any] = {
+    "temperature": 0,
+    "top_k": 1,
+    "repeat_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "dry_multiplier": 0.0,
+}
+
 
 def free_port() -> int:
     with socket.socket() as probe:
@@ -136,9 +150,9 @@ def _post(url: str, body: dict[str, Any], what: str) -> Any:
 def chat(url: str, prompt: str, *, max_tokens: int = 512, seed: int = 0) -> Reply:
     body: dict[str, Any] = {
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0,
         "max_tokens": max_tokens,
         "seed": seed,
+        **GREEDY,
     }
     reply = _post(f"{url}/v1/chat/completions", body, "chat")
     try:
@@ -156,10 +170,9 @@ def complete(url: str, prompt_ids: Sequence[int], tokens: int) -> list[int]:
     body = {
         "prompt": list(prompt_ids),
         "n_predict": tokens,
-        "temperature": 0,
-        "top_k": 1,
         "cache_prompt": False,
         "return_tokens": True,
+        **GREEDY,
     }
     reply = _post(f"{url}/completion", body, "completion")
     try:
