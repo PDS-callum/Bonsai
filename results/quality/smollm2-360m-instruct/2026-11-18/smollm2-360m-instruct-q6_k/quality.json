@@ -1,0 +1,43 @@
+{
+  "tree": "smollm2-360m-instruct-q6_k.gguf",
+  "bytes": 367358560,
+  "sha256": "771de70c7431c5ab2d7349a139aa6c08bfc4d4bc7ad211702e7469e4981088f3",
+  "measured_at": "2026-11-18T09:47:32Z",
+  "llama_cpp": "b12359",
+  "data": "quality-v1",
+  "perplexity": {
+    "value": 13.6495,
+    "stderr": 0.10102,
+    "context": 512
+  },
+  "kl_divergence": {
+    "base": "smollm2-360m-instruct-bf16.gguf",
+    "chunks": 32,
+    "mean": 0.007362,
+    "mean_stderr": 0.00012,
+    "p99": 0.05014,
+    "same_top_pct": 94.755,
+    "same_top_pct_stderr": 0.247,
+    "ppl_ratio": 1.008621,
+    "ppl_ratio_stderr": 0.001663
+  },
+  "arc": {
+    "accuracy_pct": 40.6214,
+    "stderr_pct": 1.667
+  },
+  "gsm8k": {
+    "size": 400,
+    "seed": 0,
+    "correct": 32,
+    "accuracy": 0.08,
+    "ci95": [
+      0.057235397942962354,
+      0.11075522016076943
+    ],
+    "answer_rules": {
+      "answer-is": 352,
+      "last-number": 48
+    },
+    "mean_tokens": 242.405
+  }
+}
