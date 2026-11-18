@@ -246,9 +246,9 @@ expert pruning, a custom inference engine, and growing models upward.
 
 - [x] A pot profile for the Pi exists
 - [x] The off-the-shelf frontier is measured for at least two seed families
-- [ ] At least one seed has been depth-pruned at several cut sizes, repotted,
+- [x] At least one seed has been depth-pruned at several cut sizes, repotted,
       checked and measured
-- [ ] Every tree in the plot can be traced through the journal to its seed
+- [x] Every tree in the plot can be traced through the journal to its seed
 - [ ] The frontier plot and a short write-up of what was learned are in `results/`
 
 ---
@@ -318,6 +318,8 @@ Bonsai/
 │   ├── weights.py       # Bytes read per token, from a GGUF
 │   ├── fetch.py         # Pinned, checksummed downloads
 │   ├── plant.py         # GGUF trees from a seed's original weights
+│   ├── prune.py         # Depth pruning: score layers, cut them from safetensors
+│   ├── check.py         # A planted tree against its weights, before measuring
 │   ├── quality.py       # Quality on the bench: perplexity, KLD, ARC, GSM8K
 │   ├── llama.py         # Running and reading llama.cpp's tools
 │   ├── server.py        # llama-server, for generated answers
@@ -391,6 +393,16 @@ uv run bonsai journal build
 uv run bonsai journal trees               # every tree and its measurements
 uv run bonsai journal lineage <tree>      # back to its original seed
 uv run bonsai journal frontier            # quality against speed in the pot
+
+# Prune by depth: score the layers, cut, plant, then check before measuring
+uv run bonsai fetch configs/seeds/qwen2.5-0.5b-instruct-weights.toml
+uv run bonsai fetch configs/data/calibration-v1.toml
+uv run bonsai prune score configs/seeds/qwen2.5-0.5b-instruct-weights.toml
+uv run bonsai prune cut configs/seeds/qwen2.5-0.5b-instruct-weights.toml --cut 6
+uv run bonsai plant ~/bonsai/seeds/qwen2.5-0.5b-instruct-block6 --types q4_k_m
+uv run bonsai check \
+    ~/bonsai/trees/qwen2.5-0.5b-instruct-block6/qwen2.5-0.5b-instruct-block6-bf16.gguf \
+    ~/bonsai/seeds/qwen2.5-0.5b-instruct-block6
 ```
 
 Jobs run in tmux on the Pi, so they carry on if the connection drops. Only one
@@ -436,7 +448,7 @@ uv run pytest
 - [x] Measuring on the bench: perplexity, KL divergence, ARC and GSM8K
 - [x] Planting trees from a seed's original weights
 - [x] Off-the-shelf frontier: Qwen2.5-0.5B and SmolLM2-360M
-- [ ] Depth pruning, repotting and reference checks
+- [x] Depth pruning, repotting and reference checks
 - [ ] First frontier plot and write-up
 
 **Phase 2: Wiring**
@@ -474,6 +486,12 @@ uv run pytest
 | Depth pruning first | Cheap, well studied, and keeps models GGUF-compatible. |
 | No training in Phase 1 | Training needs a GPU decision; pruning alone establishes the loop and the gap healing must close. |
 | SQLite for the journal | One file, easy to query, no server. |
+| Layers are scored by how much they change the hidden state | One pass over calibration text scores every run of layers; no training or evaluation is needed to choose what to cut. |
+| Two ways to choose layers: the best block, or the best single layers | The block score judges consecutive layers together; single scores ignore how cuts interact. Which works better is measured, not assumed. |
+| Calibration on WikiText-2's training split | Disjoint from the test split that perplexity and KL divergence use, so pruning is not tuned to the measuring text. |
+| Pruning edits the safetensors file directly | Removing whole layers only drops and renames tensors, so it needs no machine learning library and is exact. |
+| Every planted tree is checked against its weights in PyTorch before it is measured | A wrong conversion still runs and still scores; only a comparison with the original catches it. |
+| Requests to llama-server always set plain greedy decoding | GGUFs can carry their makers' sampling settings, which the server applies by default; a measurement must not depend on them. |
 | The journal is rebuilt from committed records | The records in git stay the single source of truth, and the database can never drift from them or need migrating. |
 | uv, ruff and strict mypy | Fast, reproducible environments from a lock file; one tool for linting and formatting; types checked everywhere. |
 | Typer for the CLI | Commands defined from type hints, with little boilerplate. |
@@ -690,10 +708,12 @@ What they show:
   furthest from the seed, and their maths collapses: 264 of Q2_K's 400 replies
   ran out of tokens, mostly by repeating themselves. Q4_K_M and above are close
   to the seed. ARC again barely separates the trees.
-- **K-quants fall back on this shape.** SmolLM2's hidden size, 960, is not a
-  multiple of the 256-weight blocks K-quants use, so `llama-quantize` stores
-  192 of Q4_K_M's 290 tensors as Q5_0 or Q8_0 instead. Its KL divergence still
-  matches Qwen's Q4_K_M.
+- **"Q4_K_M" is mostly 5-bit on both families.** Neither hidden size (SmolLM2's
+  960, Qwen's 896) is a multiple of the 256-weight blocks K-quants use, so
+  `llama-quantize` falls back: in both families' Q4_K_M, most layer tensors
+  are Q5_0 (176 of 224 for SmolLM2, 132 of 168 for Qwen) and only a handful
+  are Q4_K. That is why Q4_K_M keeps so much more quality than Q4_0 on these
+  models: it stores most weights with an extra bit.
 - **The Pi cannot run BF16 well.** Its cores have no bf16 arithmetic, so the
   BF16 tree is limited by calculation, not memory, and reaches only 23% of its
   ceiling. Full precision on this pot means F16.
