@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 422" width="920" height="422" role="img" aria-label="Quality against speed in the pot (pi5-4gb, 3 threads)">
+<title>Quality against speed in the pot (pi5-4gb, 3 threads)</title>
+<style>
+.surface { fill: #fcfcfb; }
+.title { font: 600 15px system-ui, sans-serif; fill: #0b0b0b; }
+.text { font: 12px system-ui, sans-serif; fill: #52514e; }
+.label { font: 11px system-ui, sans-serif; fill: #52514e; }
+.grid { stroke: #e7e6e2; stroke-width: 1; }
+.axis { stroke: #b9b8b2; stroke-width: 1; }
+.frontier { stroke: #52514e; stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+.ring { stroke: #fcfcfb; stroke-width: 2; }
+.other { fill: #8a8984; stroke: #8a8984; }
+.s0 { fill: #2a78d6; stroke: #2a78d6; }
+.s1 { fill: #eb6834; stroke: #eb6834; }
+.s2 { fill: #1baf7a; stroke: #1baf7a; }
+@media (prefers-color-scheme: dark) {
+  .surface { fill: #1a1a19; }
+  .title { fill: #f0efec; }
+  .text, .label { fill: #c3c2b7; }
+  .grid { stroke: #2e2e2c; }
+  .axis { stroke: #55554f; }
+  .frontier { stroke: #c3c2b7; }
+  .ring { stroke: #1a1a19; }
+  .other { fill: #8f8e88; stroke: #8f8e88; }
+  .s0 { fill: #3987e5; stroke: #3987e5; }
+  .s1 { fill: #d95926; stroke: #d95926; }
+  .s2 { fill: #199e70; stroke: #199e70; }
+}
+</style>
+<rect class="surface" width="920" height="422" rx="8"/>
+<text class="title" x="56" y="30">Quality against speed in the pot (pi5-4gb, 3 threads)</text>
+<circle cx="61.0" cy="56.0" r="4.5" class="s0 ring"><title>Qwen2.5-0.5B</title></circle>
+<text class="text" x="72.0" y="60">Qwen2.5-0.5B</text>
+<rect x="170.5" y="51.5" width="9.0" height="9.0" rx="1" class="s1 ring"><title>Qwen2.5-0.5B, pruned</title></rect>
+<text class="text" x="186.0" y="60">Qwen2.5-0.5B, pruned</text>
+<path d="M345.0,50.4 L350.6,60.2 L339.4,60.2 Z" class="s2 ring"><title>SmolLM2-360M</title></path>
+<text class="text" x="356.0" y="60">SmolLM2-360M</text>
+<line class="frontier" x1="454.0" y1="56" x2="476.0" y2="56"/><text class="text" x="482.0" y="60">Frontier</text>
+<text class="text" x="56.0" y="104">Maths: GSM8K, 400 problems (95% interval)</text>
+<line class="grid" x1="56.0" y1="372.0" x2="450.0" y2="372.0"/><text class="label" x="50.0" y="376.0" text-anchor="end">0%</text>
+<line class="grid" x1="56.0" y1="320.0" x2="450.0" y2="320.0"/><text class="label" x="50.0" y="324.0" text-anchor="end">10%</text>
+<line class="grid" x1="56.0" y1="268.0" x2="450.0" y2="268.0"/><text class="label" x="50.0" y="272.0" text-anchor="end">20%</text>
+<line class="grid" x1="56.0" y1="216.0" x2="450.0" y2="216.0"/><text class="label" x="50.0" y="220.0" text-anchor="end">30%</text>
+<line class="grid" x1="56.0" y1="164.0" x2="450.0" y2="164.0"/><text class="label" x="50.0" y="168.0" text-anchor="end">40%</text>
+<line class="grid" x1="56.0" y1="112.0" x2="450.0" y2="112.0"/><text class="label" x="50.0" y="116.0" text-anchor="end">50%</text>
+<text class="label" x="56.0" y="388.0" text-anchor="middle">0</text>
+<text class="label" x="121.7" y="388.0" text-anchor="middle">10</text>
+<text class="label" x="187.3" y="388.0" text-anchor="middle">20</text>
+<text class="label" x="253.0" y="388.0" text-anchor="middle">30</text>
+<text class="label" x="318.7" y="388.0" text-anchor="middle">40</text>
+<text class="label" x="384.3" y="388.0" text-anchor="middle">50</text>
+<text class="label" x="450.0" y="388.0" text-anchor="middle">60</text>
+<line class="axis" x1="56.0" y1="372" x2="450.0" y2="372"/>
+<text class="text" x="253.0" y="408.0" text-anchor="middle">Generation speed in the pot (tokens/s)</text>
+<path class="frontier" d="M380.1,372.0 V359.0 H328.3 V342.1 H279.8 V221.2 H253.3 V153.6 H217.0 V144.5 H56.0"/>
+<line class="s2" x1="376.7" y1="368.4" x2="376.7" y2="355.2" stroke-width="1.5" opacity="0.45"/>
+<path d="M376.7,358.6 L382.3,368.4 L371.0,368.4 Z" class="s2 ring"><title>smollm2-360m-instruct-q2_k.gguf: 48.8 tokens/s, 1.5%</title></path>
+<line class="s1" x1="309.9" y1="369.2" x2="309.9" y2="357.0" stroke-width="1.5" opacity="0.45"/>
+<rect x="305.4" y="361.0" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-block8-q4_k_m.gguf: 38.7 tokens/s, 1.2%</title></rect>
+<line class="s1" x1="309.5" y1="370.0" x2="309.5" y2="358.8" stroke-width="1.5" opacity="0.45"/>
+<rect x="305.0" y="362.3" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-single8-q4_k_m.gguf: 38.6 tokens/s, 1.0%</title></rect>
+<line class="s1" x1="293.0" y1="367.6" x2="293.0" y2="353.4" stroke-width="1.5" opacity="0.45"/>
+<rect x="288.5" y="358.4" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-single6-q4_k_m.gguf: 36.1 tokens/s, 1.8%</title></rect>
+<line class="s1" x1="291.5" y1="367.6" x2="291.5" y2="353.4" stroke-width="1.5" opacity="0.45"/>
+<rect x="287.0" y="358.4" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-block6-q4_k_m.gguf: 35.9 tokens/s, 1.8%</title></rect>
+<line class="s1" x1="277.6" y1="364.9" x2="277.6" y2="348.4" stroke-width="1.5" opacity="0.45"/>
+<rect x="273.1" y="354.5" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-block4-q4_k_m.gguf: 33.7 tokens/s, 2.5%</title></rect>
+<line class="s1" x1="277.4" y1="369.2" x2="277.4" y2="357.0" stroke-width="1.5" opacity="0.45"/>
+<rect x="272.9" y="361.0" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-single4-q4_k_m.gguf: 33.7 tokens/s, 1.2%</title></rect>
+<line class="s1" x1="265.8" y1="361.1" x2="265.8" y2="341.9" stroke-width="1.5" opacity="0.45"/>
+<rect x="261.3" y="349.3" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-single2-q4_k_m.gguf: 32.0 tokens/s, 3.5%</title></rect>
+<line class="s1" x1="265.7" y1="365.8" x2="265.7" y2="350.1" stroke-width="1.5" opacity="0.45"/>
+<rect x="261.2" y="355.8" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-block2-q4_k_m.gguf: 31.9 tokens/s, 2.2%</title></rect>
+<line class="s2" x1="265.5" y1="342.2" x2="265.5" y2="314.4" stroke-width="1.5" opacity="0.45"/>
+<path d="M265.5,324.8 L271.1,334.6 L259.9,334.6 Z" class="s2 ring"><title>smollm2-360m-instruct-q6_k.gguf: 31.9 tokens/s, 8.0%</title></path>
+<line class="s2" x1="261.3" y1="342.2" x2="261.3" y2="314.4" stroke-width="1.5" opacity="0.45"/>
+<path d="M261.3,324.8 L266.9,334.6 L255.6,334.6 Z" class="s2 ring"><title>smollm2-360m-instruct-q8_0.gguf: 31.3 tokens/s, 8.0%</title></path>
+<line class="s0" x1="252.6" y1="180.8" x2="252.6" y2="130.8" stroke-width="1.5" opacity="0.45"/>
+<circle cx="252.6" cy="156.2" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-q4_k_m.gguf: 29.9 tokens/s, 41.5%</title></circle>
+<line class="s0" x1="248.2" y1="237.0" x2="248.2" y2="190.4" stroke-width="1.5" opacity="0.45"/>
+<circle cx="248.2" cy="214.7" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-q2_k.gguf: 29.3 tokens/s, 30.2%</title></circle>
+<line class="s0" x1="211.4" y1="175.7" x2="211.4" y2="125.6" stroke-width="1.5" opacity="0.45"/>
+<circle cx="211.4" cy="151.0" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-q8_0.gguf: 23.7 tokens/s, 42.5%</title></circle>
+<line class="s2" x1="81.4" y1="343.3" x2="81.4" y2="315.9" stroke-width="1.5" opacity="0.45"/>
+<path d="M81.4,326.1 L87.0,335.9 L75.8,335.9 Z" class="s2 ring"><title>smollm2-360m-instruct-bf16.gguf: 3.9 tokens/s, 7.8%</title></path>
+<line class="s2" x1="380.1" y1="364.9" x2="380.1" y2="348.4" stroke-width="1.5" opacity="0.45"/>
+<path d="M380.1,353.4 L385.8,363.2 L374.5,363.2 Z" class="s2 ring"><title>smollm2-360m-instruct-q4_0.gguf: 49.4 tokens/s, 2.5%</title></path>
+<text class="label" x="388.1" y="352.0">Q4_0</text>
+<line class="s2" x1="328.3" y1="351.9" x2="328.3" y2="327.9" stroke-width="1.5" opacity="0.45"/>
+<path d="M328.3,336.5 L333.9,346.3 L322.7,346.3 Z" class="s2 ring"><title>smollm2-360m-instruct-q4_k_m.gguf: 41.5 tokens/s, 5.8%</title></path>
+<text class="label" x="336.3" y="335.1">Q4_K_M</text>
+<line class="s0" x1="279.8" y1="243.2" x2="279.8" y2="197.1" stroke-width="1.5" opacity="0.45"/>
+<circle cx="279.8" cy="221.2" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-q4_0.gguf: 34.1 tokens/s, 29.0%</title></circle>
+<text class="label" x="287.8" y="214.2">Q4_0</text>
+<line class="s0" x1="253.3" y1="178.2" x2="253.3" y2="128.2" stroke-width="1.5" opacity="0.45"/>
+<circle cx="253.3" cy="153.6" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-weights-q4_k_m.gguf: 30.1 tokens/s, 42.0%</title></circle>
+<text class="label" x="261.3" y="146.6">Q4_K_M</text>
+<line class="s0" x1="217.0" y1="169.4" x2="217.0" y2="119.0" stroke-width="1.5" opacity="0.45"/>
+<circle cx="217.0" cy="144.5" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-q6_k.gguf: 24.5 tokens/s, 43.8%</title></circle>
+<text class="label" x="225.0" y="137.5">Q6_K</text>
+<text class="text" x="506.0" y="104">Science: ARC, 1,172 questions (± 1 s.e.)</text>
+<line class="grid" x1="506.0" y1="372.0" x2="900.0" y2="372.0"/><text class="label" x="500.0" y="376.0" text-anchor="end">20%</text>
+<line class="grid" x1="506.0" y1="307.0" x2="900.0" y2="307.0"/><text class="label" x="500.0" y="311.0" text-anchor="end">30%</text>
+<line class="grid" x1="506.0" y1="242.0" x2="900.0" y2="242.0"/><text class="label" x="500.0" y="246.0" text-anchor="end">40%</text>
+<line class="grid" x1="506.0" y1="177.0" x2="900.0" y2="177.0"/><text class="label" x="500.0" y="181.0" text-anchor="end">50%</text>
+<line class="grid" x1="506.0" y1="112.0" x2="900.0" y2="112.0"/><text class="label" x="500.0" y="116.0" text-anchor="end">60%</text>
+<text class="label" x="506.0" y="388.0" text-anchor="middle">0</text>
+<text class="label" x="571.7" y="388.0" text-anchor="middle">10</text>
+<text class="label" x="637.3" y="388.0" text-anchor="middle">20</text>
+<text class="label" x="703.0" y="388.0" text-anchor="middle">30</text>
+<text class="label" x="768.7" y="388.0" text-anchor="middle">40</text>
+<text class="label" x="834.3" y="388.0" text-anchor="middle">50</text>
+<text class="label" x="900.0" y="388.0" text-anchor="middle">60</text>
+<line class="axis" x1="506.0" y1="372" x2="900.0" y2="372"/>
+<text class="text" x="703.0" y="408.0" text-anchor="middle">Generation speed in the pot (tokens/s)</text>
+<path class="frontier" d="M830.1,372.0 V217.8 H826.7 V209.5 H729.8 V184.9 H667.0 V172.1 H661.4 V166.2 H506.0"/>
+<path d="M778.3,235.3 L783.9,245.2 L772.7,245.2 Z" class="s2 ring"><title>smollm2-360m-instruct-q4_k_m.gguf: 41.5 tokens/s, 40.2%</title></path>
+<rect x="755.4" y="260.4" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-block8-q4_k_m.gguf: 38.7 tokens/s, 36.5%</title></rect>
+<rect x="755.0" y="261.9" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-single8-q4_k_m.gguf: 38.6 tokens/s, 36.2%</title></rect>
+<rect x="738.5" y="282.8" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-single6-q4_k_m.gguf: 36.1 tokens/s, 33.0%</title></rect>
+<rect x="737.0" y="249.2" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-block6-q4_k_m.gguf: 35.9 tokens/s, 38.2%</title></rect>
+<rect x="723.1" y="226.0" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-block4-q4_k_m.gguf: 33.7 tokens/s, 41.8%</title></rect>
+<rect x="722.9" y="257.4" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-single4-q4_k_m.gguf: 33.7 tokens/s, 36.9%</title></rect>
+<rect x="711.3" y="227.5" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-single2-q4_k_m.gguf: 32.0 tokens/s, 41.5%</title></rect>
+<rect x="711.2" y="206.5" width="9.0" height="9.0" rx="1" class="s1 ring"><title>qwen2.5-0.5b-instruct-block2-q4_k_m.gguf: 31.9 tokens/s, 44.8%</title></rect>
+<path d="M715.5,232.3 L721.1,242.2 L709.9,242.2 Z" class="s2 ring"><title>smollm2-360m-instruct-q6_k.gguf: 31.9 tokens/s, 40.6%</title></path>
+<path d="M711.3,222.6 L716.9,232.5 L705.6,232.5 Z" class="s2 ring"><title>smollm2-360m-instruct-q8_0.gguf: 31.3 tokens/s, 42.1%</title></path>
+<circle cx="703.3" cy="204.3" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-weights-q4_k_m.gguf: 30.1 tokens/s, 45.8%</title></circle>
+<circle cx="702.6" cy="193.1" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-q4_k_m.gguf: 29.9 tokens/s, 47.5%</title></circle>
+<circle cx="698.2" cy="201.3" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-q2_k.gguf: 29.3 tokens/s, 46.3%</title></circle>
+<path d="M531.4,225.6 L537.0,235.4 L525.8,235.4 Z" class="s2 ring"><title>smollm2-360m-instruct-bf16.gguf: 3.9 tokens/s, 41.7%</title></path>
+<path d="M830.1,212.1 L835.8,222.0 L824.5,222.0 Z" class="s2 ring"><title>smollm2-360m-instruct-q4_0.gguf: 49.4 tokens/s, 43.7%</title></path>
+<text class="label" x="838.1" y="210.8">Q4_0</text>
+<path d="M826.7,203.9 L832.3,213.8 L821.0,213.8 Z" class="s2 ring"><title>smollm2-360m-instruct-q2_k.gguf: 48.8 tokens/s, 45.0%</title></path>
+<text class="label" x="834.7" y="224.5">Q2_K</text>
+<circle cx="729.8" cy="184.9" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-q4_0.gguf: 34.1 tokens/s, 48.8%</title></circle>
+<text class="label" x="737.8" y="177.9">Q4_0</text>
+<circle cx="667.0" cy="172.1" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-q6_k.gguf: 24.5 tokens/s, 50.7%</title></circle>
+<text class="label" x="675.0" y="165.1">Q6_K</text>
+<circle cx="661.4" cy="166.2" r="4.5" class="s0 ring"><title>qwen2.5-0.5b-instruct-q8_0.gguf: 23.7 tokens/s, 51.7%</title></circle>
+<text class="label" x="669.4" y="181.2">Q8_0</text>
+</svg>
