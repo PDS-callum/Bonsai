@@ -402,6 +402,9 @@ class FrontierPoint:
     low: float | None
     high: float | None
     on_frontier: bool = False
+    origin: str = ""
+    """The original seed this tree descends from."""
+    pruned: bool = False
 
 
 def frontier(
@@ -434,9 +437,21 @@ def frontier(
         """,
         {"threads": threads, "repack": int(repack), "tokens": tokens, "metric": metric},
     ).fetchall()
+    seeds = {
+        row["name"]: (row["kind"], row["parent"])
+        for row in connection.execute("SELECT name, kind, parent FROM seeds")
+    }
+
+    def origin(seed: str) -> tuple[str, bool]:
+        pruned = False
+        while seed in seeds and seeds[seed][1]:
+            pruned = pruned or seeds[seed][0] == "pruned"
+            seed = seeds[seed][1]
+        return seed, pruned
+
     points = [
         FrontierPoint(r["file"], r["seed"], r["quant"], r["tps"], r["memory"],
-                      r["value"], r["low"], r["high"])
+                      r["value"], r["low"], r["high"], False, *origin(r["seed"]))
         for r in rows if r["tps"] is not None
     ]  # fmt: skip
     # Lower is better for these; flip them so "higher is better" holds.

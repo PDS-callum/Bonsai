@@ -18,6 +18,7 @@ from bonsai.journal import (
     lineage,
     trees_summary,
 )
+from bonsai.plot import Panel, render
 from bonsai.pot import PotError, load_pot
 
 journal_app = typer.Typer(
@@ -112,3 +113,39 @@ def frontier_command(
     except (JournalError, PotError, OSError) as error:
         raise _fail(error) from error
     typer.echo(format_frontier(points, metric), nl=False)
+
+
+@journal_app.command("plot")
+def plot_command(
+    out: Annotated[Path, typer.Option(help="The SVG to write.")] = Path(
+        "results/frontier/frontier.svg"
+    ),
+    pot: Annotated[
+        Path, typer.Option(help="Pot profile whose settings the speeds must match.")
+    ] = Path("configs/pots/pi5-4gb.toml"),
+    db: Db = None,
+) -> None:
+    """Plot maths and science scores against speed in the pot."""
+    try:
+        profile = load_pot(pot)
+        with closing(connect(_db(db))) as connection:
+            maths, science = (
+                frontier(
+                    connection, metric, threads=profile.threads, repack=profile.repack
+                )
+                for metric in ("gsm8k_pct", "arc_pct")
+            )
+    except (JournalError, PotError, OSError) as error:
+        raise _fail(error) from error
+    svg = render(
+        [
+            Panel("Maths: GSM8K, 400 problems (95% interval)", maths, 0, 50, 10),
+            Panel("Science: ARC, 1,172 questions (± 1 s.e.)", science, 20, 60, 10),
+        ],
+        title=f"Quality against speed in the pot ({profile.name}, "
+        f"{profile.threads} threads)",
+        x_label="Generation speed in the pot (tokens/s)",
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(svg, encoding="utf-8", newline="\n")
+    typer.echo(f"{len(maths)} trees plotted in {out}")
