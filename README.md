@@ -295,6 +295,7 @@ Bonsai/
 │   ├── bench.py         # Benchmark results against the ceiling
 │   ├── weights.py       # Bytes read per token, from a GGUF
 │   ├── fetch.py         # Pinned, checksummed downloads
+│   ├── plant.py         # GGUF trees from a seed's original weights
 │   ├── quality.py       # Quality on the bench: perplexity, KLD, ARC, GSM8K
 │   ├── llama.py         # Running and reading llama.cpp's tools
 │   ├── server.py        # llama-server, for generated answers
@@ -335,6 +336,11 @@ against its ceiling, and quality on the bench. Set `BONSAI_PI` to the Pi's
 ```bash
 # Fetch off-the-shelf trees (pinned and checksummed) to ~/bonsai/seeds
 uv run bonsai fetch configs/seeds/qwen2.5-0.5b-instruct-gguf.toml
+
+# Or fetch a seed's original weights and plant trees from them, with the
+# pinned llama.cpp, to ~/bonsai/trees/<seed>
+uv run bonsai fetch configs/seeds/smollm2-360m-instruct.toml
+uv run bonsai plant configs/seeds/smollm2-360m-instruct.toml
 
 # The ceiling for one tree in the pot
 uv run bonsai pot ceiling configs/pots/pi5-4gb.toml \
@@ -452,6 +458,9 @@ uv run pytest
 | Quality is measured with llama.cpp's own tools and the pinned build | Scores and speeds then describe the same code and the same GGUF files. |
 | KL divergence from the full-precision seed as the main quality guide | It needs far fewer tokens than accuracy to tell close trees apart. |
 | A fixed 400-problem GSM8K subset | The full set takes half an hour per tree; 400 gives intervals of about ±4.5 points, and the same problems every time. |
+| Trees are planted by Bonsai when a seed has no full set of GGUFs | The pinned converter and quantiser make every tree reproducible to the byte, with the same quantisation recipe across families. |
+| Quantisation without an importance matrix | It matches the off-the-shelf trees it is compared with, and keeps planting deterministic. Importance matrices can be a later operation. |
+| Seeds trained in bf16 are converted to BF16 first | It is lossless, so KL divergence is measured from the seed itself rather than from an F16 rounding of it. |
 | Measuring data from plain-text sources, not Parquet | Readable with the standard library, so no heavy dependency just to load questions. |
 | Read bandwidth at 4 threads sets the ceiling | It is what trees run with; the single-core figure is higher but not what inference sees. |
 | Everything into `main` via pull request | Keeps history reviewable. |
