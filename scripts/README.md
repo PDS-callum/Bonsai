@@ -80,13 +80,5 @@ on Windows x64, downloads the official prebuilt CPU binaries for the same commit
 (including `llama-quantize`), checking their SHA-256 checksum. Everything goes
 under `~/bonsai` (override with `BONSAI_HOME`).
 
-### Fetching seeds
-
-```bash
-uv run python scripts/pc/fetch_gguf.py configs/seeds/qwen2.5-0.5b-instruct-gguf.toml
-```
-
-Downloads the GGUFs a seed manifest in [`configs/seeds/`](../configs/seeds)
-lists, from Hugging Face at the exact revision it pins. Each file is checked
-against its SHA-256 before it is moved into place under
-`~/bonsai/seeds/<name>/`. Files already present and correct are skipped.
+Seeds and measuring data are fetched with `bonsai fetch <manifest>`, which
+checks each file's SHA-256; see the main README.

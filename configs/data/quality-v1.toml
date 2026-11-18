@@ -1,0 +1,32 @@
+# Data for measuring a tree's quality on the potting bench.
+#
+#   wiki.test.raw              WikiText-2 test set: perplexity, and KL divergence
+#                              from the seed's own predictions
+#   arc-combined-validation    ARC (Easy and Challenge) validation questions in
+#                              llama-perplexity's multiple-choice format
+#   gsm8k-test.jsonl           GSM8K test problems: grade-school maths, solved
+#                              step by step
+#
+# The first two come from llama.cpp's validation datasets; GSM8K from OpenAI's
+# release. Each is pinned to a fixed revision and checked by SHA-256. Changing
+# any of them would change every score, so a new set gets a new manifest.
+
+name = "quality-v1"
+kind = "data"
+license = "WikiText: CC BY-SA 3.0; ARC: CC BY-SA 4.0; GSM8K: MIT"
+
+[[files]]
+name = "wiki.test.raw.gz"
+url = "https://huggingface.co/datasets/ikawrakow/validation-datasets-for-llama.cpp/resolve/37884b81b4957f1950a53b6ff48d77c8dd5e430c/wiki.test.raw.gz"
+sha256 = "90e54abff43c37b9a3d10591e9ef0aad550d43b8180dae6bb8f2cd9544abbe78"
+gunzip = true
+
+[[files]]
+name = "arc-combined-validation.bin"
+url = "https://huggingface.co/datasets/ikawrakow/validation-datasets-for-llama.cpp/resolve/37884b81b4957f1950a53b6ff48d77c8dd5e430c/arc-combined-validation.bin"
+sha256 = "bb84f5e8cc78e73a8ff98aa58ceeee354d2628931659d4fa9ed266335eea1a4d"
+
+[[files]]
+name = "gsm8k-test.jsonl"
+url = "https://raw.githubusercontent.com/openai/grade-school-math/3101c7d5072418e28b9008a6636bde82a006892c/grade_school_math/data/test.jsonl"
+sha256 = "3730d312f6e3440559ace48831e51066acaca737f6eabec99bccb9e4b3c39d14"

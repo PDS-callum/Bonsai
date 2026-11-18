@@ -194,9 +194,17 @@ every later tree has to beat. No training yet.
 
 ### Measurements
 
-- **Quality:** perplexity on held-out text (fast, used to guide pruning), plus
-  task accuracy on fixed subsets of GSM8K (maths reasoning) and ARC (science
-  knowledge), with confidence intervals.
+- **Quality**, measured on the PC with the same pinned llama.cpp build
+  (`bonsai quality run`):
+  - *Perplexity* on the WikiText-2 test set: how well the tree predicts text.
+  - *KL divergence* from the seed at full precision, on the first 32 chunks of
+    the same text: how far each next-token prediction has moved. It resolves
+    small differences that perplexity averages away, which makes it the main
+    guide for pruning.
+  - *ARC* (Easy and Challenge, 1,172 questions): science knowledge, scored by
+    which answer the tree finds most probable, so no answer parsing is needed.
+  - *GSM8K* (a fixed 400-problem subset): maths the tree solves step by step,
+    with a 95% confidence interval.
 - **Speed:** prompt and generation tokens per second, time to first token,
   time per answer.
 - **Memory:** file size and peak RAM on the Pi.
@@ -278,6 +286,7 @@ Bonsai/
 ├── configs/
 │   ├── pots/            # Pot profiles (TOML), one per machine
 │   ├── seeds/           # Pinned, checksummed sources of seeds
+│   ├── data/            # Pinned, checksummed measuring data
 │   └── seasons/         # One file per season or experiment
 ├── prompts/             # Versioned prompt templates
 ├── src/bonsai/
@@ -285,6 +294,11 @@ Bonsai/
 │   ├── jobs.py          # Detached jobs in the pot, driven over SSH
 │   ├── bench.py         # Benchmark results against the ceiling
 │   ├── weights.py       # Bytes read per token, from a GGUF
+│   ├── fetch.py         # Pinned, checksummed downloads
+│   ├── quality.py       # Quality on the bench: perplexity, KLD, ARC, GSM8K
+│   ├── llama.py         # Running and reading llama.cpp's tools
+│   ├── server.py        # llama-server, for generated answers
+│   ├── gsm8k.py         # GSM8K problems, answers and intervals
 │   ├── journal.py       # SQLite lineage store
 │   ├── pot.py           # Pot profiles and the bytes-per-token ceiling
 │   ├── prune/           # Pruning operations (depth first)
@@ -314,13 +328,13 @@ Bonsai/
 
 ## Using Bonsai today
 
-Phase 1 is in progress. What works now is measuring trees in the pot and
-comparing them with its ceiling. Set `BONSAI_PI` to the Pi's `user@address`
-(SSH keys, no password prompts), then:
+Phase 1 is in progress. What works now is measuring trees: speed in the pot,
+against its ceiling, and quality on the bench. Set `BONSAI_PI` to the Pi's
+`user@address` (SSH keys, no password prompts), then:
 
 ```bash
 # Fetch off-the-shelf trees (pinned and checksummed) to ~/bonsai/seeds
-uv run python scripts/pc/fetch_gguf.py configs/seeds/qwen2.5-0.5b-instruct-gguf.toml
+uv run bonsai fetch configs/seeds/qwen2.5-0.5b-instruct-gguf.toml
 
 # The ceiling for one tree in the pot
 uv run bonsai pot ceiling configs/pots/pi5-4gb.toml \
@@ -336,6 +350,13 @@ uv run bonsai job collect <job-id> --clean  # fetch results, free the Pi
 # Compare the results with the ceiling
 uv run bonsai bench report configs/pots/pi5-4gb.toml \
     results/jobs/<job-id>/results/*.jsonl --trees ~/bonsai/seeds/qwen2.5-0.5b-instruct
+
+# Measure quality on the bench, against the seed at full precision
+uv run bonsai fetch configs/data/quality-v1.toml
+uv run bonsai quality run ~/bonsai/seeds/qwen2.5-0.5b-instruct/*.gguf \
+    --base ~/bonsai/seeds/qwen2.5-0.5b-instruct/qwen2.5-0.5b-instruct-fp16.gguf \
+    --out results/quality/qwen2.5-0.5b-instruct/<date>
+uv run bonsai quality report results/quality/qwen2.5-0.5b-instruct/<date>
 ```
 
 Jobs run in tmux on the Pi, so they carry on if the connection drops. Only one
@@ -378,7 +399,8 @@ uv run pytest
 - [x] Pot profile
 - [x] Measuring in the pot: detached jobs and results against the ceiling
 - [ ] Journal
-- [ ] Off-the-shelf frontier (speed measured for Qwen2.5-0.5B; quality next)
+- [x] Measuring on the bench: perplexity, KL divergence, ARC and GSM8K
+- [ ] Off-the-shelf frontier (Qwen2.5-0.5B measured; a second family next)
 - [ ] Depth pruning, repotting and reference checks
 - [ ] First frontier plot and write-up
 
@@ -427,6 +449,10 @@ uv run pytest
 | The `gguf` package reads GGUF files | It is llama.cpp's own reader, so tensor sizes match the runtime's. |
 | Jobs in the pot are driven over plain `ssh` and `scp` | Nothing to install on the Pi beyond tmux; every step is a command that can be run by hand. |
 | One job in the pot at a time | Two measurements at once would each slow the other. |
+| Quality is measured with llama.cpp's own tools and the pinned build | Scores and speeds then describe the same code and the same GGUF files. |
+| KL divergence from the full-precision seed as the main quality guide | It needs far fewer tokens than accuracy to tell close trees apart. |
+| A fixed 400-problem GSM8K subset | The full set takes half an hour per tree; 400 gives intervals of about ±4.5 points, and the same problems every time. |
+| Measuring data from plain-text sources, not Parquet | Readable with the standard library, so no heavy dependency just to load questions. |
 | Read bandwidth at 4 threads sets the ceiling | It is what trees run with; the single-core figure is higher but not what inference sees. |
 | Everything into `main` via pull request | Keeps history reviewable. |
 
@@ -546,6 +572,47 @@ Generation is 9–16% faster than with llama.cpp's defaults, peak memory is
 is prompt speed, a third of what it was for Q4_0. Q4_0 is now the reference
 tree for this pot: the fastest generation, the smallest memory and the fastest
 prompts of the 4-bit trees.
+
+**Quality on the bench** (2026-11-17, raw data, tool logs and every GSM8K reply
+in
+[`results/quality/qwen2.5-0.5b-instruct/2026-11-17`](results/quality/qwen2.5-0.5b-instruct/2026-11-17)).
+KL divergence and the same-top-token rate compare each tree with F16. ARC is
+± one standard error; GSM8K shows its 95% interval.
+
+| Quantisation | File | Perplexity | KL divergence | Same top token | ARC | GSM8K |
+|---|---|---|---|---|---|---|
+| Q2_K | 415 MB | 17.71 ± 0.14 | 0.1266 | 81.7% | 46.3% ± 1.7 | 30.2% (26.0–34.9%) |
+| Q4_0 | 429 MB | 17.50 ± 0.14 | 0.1169 | 82.6% | 48.8% ± 1.7 | 29.0% (24.8–33.6%) |
+| Q4_K_M | 491 MB | 16.36 ± 0.13 | 0.0319 | 91.0% | 47.5% ± 1.7 | 41.5% (36.8–46.4%) |
+| Q6_K | 650 MB | 15.84 ± 0.12 | 0.0035 | 96.8% | 50.7% ± 1.7 | 43.8% (39.0–48.6%) |
+| Q8_0 | 676 MB | 15.82 ± 0.12 | 0.0021 | 97.6% | 51.7% ± 1.7 | 42.5% (37.7–47.4%) |
+| F16 | 1266 MB | 15.73 ± 0.12 | – | – | 50.9% ± 1.7 | 44.2% (39.5–49.1%) |
+
+What they show:
+
+- **Quantisation costs quality in steps.** Q2_K and Q4_0 move far from the seed:
+  perplexity is 11–13% higher and the top token changes at almost one position
+  in five. Q4_K_M moves a quarter as far, and Q6_K and Q8_0 are close to
+  lossless.
+- **Reasoning breaks before knowledge.** On GSM8K, Q2_K and Q4_0 lose about 14
+  points, and their intervals do not overlap with F16's. On ARC every tree is
+  within about two standard errors of F16. Answering a multiple-choice question
+  takes one prediction, but solving a problem step by step takes hundreds, and
+  small errors compound. Q4_0 also wanders: 62 of its 400 replies ran out of
+  tokens before an answer, against 16 for F16.
+- **KL divergence agrees with the tasks.** KL divergence orders the trees the
+  same way as GSM8K, and it took 32 chunks of text, not 400 generated solutions.
+  That supports using it to guide pruning.
+- **The pot's reference tree is too lossy.** Q4_K_M generates 12% slower than
+  Q4_0 in the pot (29.9 against 34.0 t/s) and peaks 64 MB higher. In return it
+  keeps almost all of F16's maths: 41.5% against 29.0%. Q4_0 is still the
+  fastest tree, but Q4_K_M is the better one unless speed is all that matters. Q6_K and Q8_0
+  add little quality over Q4_K_M for 28–34% more bytes per token.
+- **The seed ignores the requested answer format.** F16 boxed its final answer
+  (`\boxed{}`) in 351 of 400 replies, despite being asked for "The answer is:".
+  The scorer accepts either, so formatting is not scored. Replies whose answer
+  came from the last number rather than a stated answer were almost always
+  wrong.
 
 ---
 

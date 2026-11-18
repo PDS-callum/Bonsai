@@ -1,0 +1,2 @@
+Final result: 48.7917 +/- 1.6966
+Random chance: 25.0072 +/- 1.4699

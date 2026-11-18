@@ -7,8 +7,10 @@ import typer
 
 from bonsai import __version__
 from bonsai.bench import BenchError, format_report, load_runs
+from bonsai.fetch import FetchError, destination, fetch, load_manifest
 from bonsai.job_cli import job_app
 from bonsai.pot import GIB, Pot, PotError, load_pot
+from bonsai.quality_cli import quality_app
 from bonsai.weights import weight_bytes
 
 app = typer.Typer(
@@ -22,6 +24,7 @@ app.add_typer(pot_app, name="pot")
 bench_app = typer.Typer(help="Read benchmark results from the pot.")
 app.add_typer(bench_app, name="bench")
 app.add_typer(job_app, name="job")
+app.add_typer(quality_app, name="quality")
 
 PotFile = Annotated[
     Path,
@@ -139,3 +142,28 @@ def bench_report(
             if run.model_file not in per_token and path.is_file():
                 per_token[run.model_file] = weight_bytes(path).per_token
     typer.echo(format_report(pot, runs, per_token), nl=False)
+
+
+@app.command("fetch")
+def fetch_command(
+    manifest: Annotated[
+        Path,
+        typer.Argument(
+            help="Manifest of pinned files, e.g. configs/data/quality-v1.toml.",
+            exists=True,
+            dir_okay=False,
+        ),
+    ],
+    only: Annotated[
+        list[str] | None,
+        typer.Option("--only", help="Fetch just this file (repeatable)."),
+    ] = None,
+) -> None:
+    """Download a manifest's files, checking each one's SHA-256."""
+    try:
+        loaded = load_manifest(manifest)
+        fetch(loaded, only=only or ())
+    except FetchError as error:
+        typer.echo(f"error: {error}", err=True)
+        raise typer.Exit(1) from error
+    typer.echo(f"files in {destination(loaded)}")
